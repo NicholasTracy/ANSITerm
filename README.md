@@ -5,7 +5,7 @@
 
 ---
 
-### <p align="center" color="red">WARNING: This Library is still in alpha and might not work!</p>
+### <p align="center">WARNING: This is the Development Branch. This code may not work as desired. This is where new features and code will be tested. Only use this if you want to test prerelease features and bug fixes. If you find a bug please check the issues section to see if it has already been brought to my attention. If it isn't there, please create an issues and include as much detail as possible so that I can recreate the bug you encountered.</p>
 
 ---
 
