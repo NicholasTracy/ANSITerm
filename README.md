@@ -1,11 +1,7 @@
 # <p align="center">ANSITerm</p>
 
 
-### <p align="center"> ANSITerm is an Arduino library providing full ANSI terminal control over (*typically*) a serial connection.</p>
-
----
-
-### <p align="center" color="red">WARNING: This Library is still in alpha and might not work!</p>
+### <p align="center"> ANSITerm is an Arduino library providing full ANSI terminal control over any stream connection.</p>
 
 ---
 
