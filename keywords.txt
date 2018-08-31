@@ -1,0 +1,3 @@
+ANSITerm	KEYWORD1
+cls			KEYWORD2
+init		KEYWORD2
