@@ -1,4 +1,5 @@
 # <p align="center">ANSITerm</p>
+<p align="center">[![Build Status](https://travis-ci.org/NicholasTracy/ANSITerm.svg?branch=development)](https://travis-ci.org/NicholasTracy/ANSITerm)</p>
 
 
 ### <p align="center"> ANSITerm is an Arduino library providing full ANSI terminal control over (*typically*) a serial connection.</p>
