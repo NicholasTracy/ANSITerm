@@ -8,7 +8,7 @@
 
 ---
 
-<p align="center">Current Travis CI Build Status for the development branch:<a href="https://travis-ci.org/NicholasTracy/ANSITerm">
+<p align="center">Current Travis CI Build Status for the development branch:<a href="https://travis-ci.org/NicholasTracy/ANSITerm"><br>
 <img src="https://travis-ci.org/NicholasTracy/ANSITerm.svg?branch=development" alt="Travis CI Build Status">
 </a></p>
 
