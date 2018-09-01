@@ -1,16 +1,24 @@
-# <p align="center">ANSITerm</p>
+# <p align="center">ANSITerm Library</p>
 
-
-### <p align="center"> ANSITerm is an Arduino library providing full ANSI terminal control over any stream connection.</p>
+### <p align="center"> ANSITerm is an Arduino library providing ANSI escape sequence control of a capable terminal using the stream class.</p>
 
 ---
 
+### <p align="center">This is the master branch, this is where all stable releases will be generated. There <i>should not</i> be any issues with this build, however if you do find a bug, please check the [Issues]() section to see if it has been brought ot my attention. If it hasn't, please create a bug report and icnlude as much detail as possible so that I can recreate it.</p>
+
+---
+
+<p align="center">Current Travis CI Build Status for the master branch:<a href="https://travis-ci.org/NicholasTracy/ANSITerm"><br>
+<img src="https://travis-ci.org/NicholasTracy/ANSITerm.svg?branch=master" alt="Travis CI Build Status">
+</a></p>
+
+---
 
 ##### This code is loosely based on the work done in the *BasicTerm* Library
 [BasicTerm GitHub](http://github.com/nottwo/BasicTerm).
 
 
-##### Also, some inspiration was taken from the VT100 library by Rob Tillaart
+##### Also, some inspiration was taken from the *VT100 library* by Rob Tillaart
 [VT100 GitHub](https://github.com/RobTillaart/Arduino/tree/master/libraries/VT100)
 
 
@@ -23,7 +31,6 @@
 [Wikipedia article on ANSI escape codes](https://en.wikipedia.org/wiki/ANSI_escape_code#Escape_sequences)
 
 ---
-
 
 ### Installation:
 
@@ -77,3 +84,7 @@ Trannie Carter & <borys@nottwo.org>
 + .ANS file support for loading graphics and animations from SD card or other memory.
 
 ---
+
+### Current release status:
+
+Library is currently still in development. No releases have been made yet. 
