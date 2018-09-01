@@ -85,4 +85,4 @@ Trannie Carter & <borys@nottwo.org>
 
 ### Current release status:
 
-Library is currently still in development. No release have been made yet. 
+Library is currently still in development. No releases have been made yet. 
