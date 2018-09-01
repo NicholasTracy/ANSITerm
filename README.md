@@ -1,15 +1,16 @@
-# <p align="center">ANSITerm</p>
-[![Build Status](https://travis-ci.org/NicholasTracy/ANSITerm.svg?branch=development)](https://travis-ci.org/NicholasTracy/ANSITerm)
+# <p align="center">ANSITerm Library</p>
 
-
-### <p align="center"> ANSITerm is an Arduino library providing full ANSI terminal control over (*typically*) a serial connection.</p>
+### <p align="center"> ANSITerm is an Arduino library providing ANSI escape sequence control of a capable terminal using the stream class.</p>
 
 ---
 
-### <p align="center">WARNING: This is the Development Branch. This code may not work as desired. This is where new features and code will be tested. Only use this if you want to test prerelease features and bug fixes. If you find a bug please check the issues section to see if it has already been brought to my attention. If it isn't there, please create an issues and include as much detail as possible so that I can recreate the bug you encountered.</p>
+### <p align="center">WARNING: This is the Development Branch. This code may not work as desired. This is where new features and bugfixes will be tested. Only use this if you want to test prerelease features and bug fixes. If you find a bug please check the [Issues](https://github.com/NicholasTracy/ANSITerm/issues) section to see if it has already been brought to my attention. If it isn't there, please create a new issue and include as much detail as possible so that I can recreate the bug you encountered.</p>
 
 ---
 
+Current Travis CI Build Status: [![Build Status](https://travis-ci.org/NicholasTracy/ANSITerm.svg?branch=development)](https://travis-ci.org/NicholasTracy/ANSITerm)
+
+---
 
 ##### This code is loosely based on the work done in the *BasicTerm* Library
 [BasicTerm GitHub](http://github.com/nottwo/BasicTerm).
@@ -28,7 +29,6 @@
 [Wikipedia article on ANSI escape codes](https://en.wikipedia.org/wiki/ANSI_escape_code#Escape_sequences)
 
 ---
-
 
 ### Installation:
 
@@ -82,3 +82,7 @@ Trannie Carter & <borys@nottwo.org>
 + .ANS file support for loading graphics and animations from SD card or other memory.
 
 ---
+
+### Current release status:
+
+Library is currently still in development. No release have been made yet. 
