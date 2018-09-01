@@ -1,20 +1,17 @@
 /* ANSITerm Library
+ * https://github.com/NicholasTracy/ANSITerm
+ * 2018 Nicholas Tracy <https://github.com/NicholasTracy>
  * ---------------
  * ANSITerm.h
- * This file provide definitions for the complete list of ANSI escape sequences
- * as well as the necasarry deffinitions for the library.
  * ---------------
- * Provides full ANSI escape sequence control of terminals over serial.
+ * Provides full ANSI escape sequence control of capable terminals over the Arduino stream class.
  * Primarilly for use with virtual terms e.g. PuTTy and xTerm 
  * ---------------
- * Original code developed and distributed as BasicTerm.
+ * Original concept based on the BasicTerm library.
  * https://github.com/nottwo/BasicTerm
- * Copyright 2011 Trannie Carter <borys@nottwo.org>
+ * 2011 Trannie Carter <borys@nottwo.org>
  * ---------------
- * Modified/rewritten and redistributed as ANSITerm.
- * Copyright 2018 Nicholas Tracy <https://github.com/NicholasTracy>
- * ---------------
- * Licensed for use under the terms of the GNU Lesser General Public License v3
+ * Licensed for use under the terms of the General Public License v3
  * ---------------
  */
 
@@ -27,7 +24,7 @@
 #define ANSITERM_MINOR_VERSION          1
 #define ANSITERM_BUGFIX_VERSION			0
 	
-//All ASCII codes are in octals
+//All ASCII codes are in octals as needed.
 //This reduces the code footprint and speeds up serial
 
 //Escape Sequence Start
@@ -87,16 +84,14 @@
 	
 //Screen Commands
 	#define AT_CLS					//2J
-	#define AT_
 
 class ANSITerm {
 
 	public:
         ANSITerm(Stream *);
-		boolean begin(uint8_t
 		
     private: 
-        Stream *serial;
+        
 };
 
 #endif
