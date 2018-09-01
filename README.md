@@ -4,7 +4,7 @@
 
 ---
 
-### <p align="center">This is the master branch, this is where all stable releases will be generated. There <i>should not</i> be any issues with this build, however if you do find a bug, please check the [Issues]() section to see if it has been brought to my attention. If it hasn't, please create a bug report and include as much detail as possible so that I can recreate it.</p>
+### <p align="center">This is the master branch, this is where all stable releases will be generated. There <i>should not</i> be any issues with this build, however if you do find a bug, please check the [Issues](ANSITerm/issues) section to see if it has been brought to my attention. If it hasn't, please create a bug report and include as much detail as possible so that I can recreate it.</p>
 
 ---
 
@@ -61,14 +61,13 @@ BasicTerm is licensed under the terms of the GNU Lesser
 General Public License v3.
 
 No warranties or guarentees are made, the library is provided as is.
-
-Please refer to the documentation provided for more information.
+[License Information]( ANSITerm/LICENSE )
 
 
 ### Author:
 
 
-Nicholas Tracy <https://github.com/NicholasTracy>
+Nicholas Tracy [Github](https://github.com/NicholasTracy)
 
 
 Original Idea and bases for this library credited to:
