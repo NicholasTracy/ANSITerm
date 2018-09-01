@@ -4,7 +4,7 @@
 
 ---
 
-### <p align="center">This is the master branch, this is where all stable releases will be generated. There <i>should not</i> be any issues with this build, however if you do find a bug, please check the [Issues](ANSITerm/issues) section to see if it has been brought to my attention. If it hasn't, please create a bug report and include as much detail as possible so that I can recreate it.</p>
+### <p align="center">This is the master branch, this is where all stable releases will be generated. There <i>should not</i> be any issues with this build, however if you do find a bug, please check the [Issues](https://github.com/NicholasTracy/ANSITerm/issues) section to see if it has been brought to my attention. If it hasn't, please create a bug report and include as much detail as possible so that I can recreate it.</p>
 
 ---
 
