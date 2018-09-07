@@ -17,5 +17,14 @@
 
 #include "ANSITerm.h"
 
-
+uint8_t arrayPointer
            
+//Store each command as an array of type byte. Each can be executed using a simple loop
+	byte sequence[]={};
+
+	while(arrayPointer<sizeof(sequence))
+	{
+		Stream.write(sequence[arrayPointer]);
+		arrayPointer++;
+	}
+	arrayPointer = 0;
