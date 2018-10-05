@@ -17,14 +17,52 @@
 
 #include "ANSITerm.h"
 
-uint8_t arrayPointer
-           
-//Store each command as an array of type byte. Each can be executed using a simple loop
-	byte sequence[]={};
+#include <string.h>
+#include <stdlib.h>
 
-	while(arrayPointer<sizeof(sequence))
-	{
-		Stream.write(sequence[arrayPointer]);
-		arrayPointer++;
+//Default settings for ANSITerm constructor (default Serial stream. VT100 terminal level, 4 Bit color mode)
+ANSITerm::ANSITerm()
+{
+	
+	
+}
+ANSITerm::begin(Stream &s=Serial, uint8_t t=VT100, uint8_t c=4_BIT) 
+: stream(s), termLevel(t), colorMode(c)
+{
+
+
+}
+ANSITerm::end()
+{
+
+
+}
+ANSITerm::setTerminalLevel()
+{
+
+
+}
+ANSITerm::write(char)
+{
+
+
+}
+ANSITerm::beep(void)
+{
+
+
+}
+ANSITerm::read(void)
+{
+	int8_t rxData = stream->read();
+	if(rxData != -1){
+		parse(rxData);
 	}
-	arrayPointer = 0;
+
+}
+ANSITerm::clear()
+{
+
+
+}
+ANSITerm::parse()

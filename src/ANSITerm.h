@@ -18,80 +18,87 @@
 #ifndef ANSITERM_H
 #define ANSITERM_H
 
-#include <Arduino.h>
+#include "constants.h"
+#include "Arduino.h"
+
 
 #define ANSITERM_MAJOR_VERSION          0
 #define ANSITERM_MINOR_VERSION          1
 #define ANSITERM_BUGFIX_VERSION			0
-	
-//All ASCII codes are in hex bytes.
-//This reduces the code footprint and speeds up the stream by using a byte array and write.
-
-//Escape Sequence Start
-	#define AT_ESC			 		//27		ESC
-	
-//Other ASCII
-	#define AT_NULL					//00		Null
-	#define AT_SC			 		//59		';' Used to chain some values in certain commands.
-	#define AT_C					//58		':' Used to chain some values, alternative used by some terminals
-	#define AT_DEL					//127		Delete
-	#define AT_?					//63		Literal '?'
-	#define AT_BELL					//07		Bell
-	
-//Set Text Attributes
-	#define AT_NORMAL				//48		0
-	#define AT_BOLD 				//49		1
-	#define AT_FAINT				//50		2
-	#define AT_ITAL					//51		3 Not Widely Supported
-	#define AT_UNDERSCORE			//52		4
-	#define AT_BLINK				//53		5
-	#define AT_RBLINK				//54		6 Not Widely Supported
-	#define AT_REVERSE				//55		7
-	#define AT_CONCEALED			//56		8 Not Widely Supported
-	#define AT_STRIKE				//57		9
-	
-	#define AT_BLACK				//48		0
-	#define AT_RED					//49		1
-	#define AT_GREEN 				//50		2
-	#define AT_YELLOW 				//51		3
-	#define AT_BLUE					//52		4
-	#define AT_MAGENTA				//53		5
-	#define AT_CYAN					//54		6
-	#define AT_WHITE				//55		7
-	
-	#define AT_FG4					//51,xx		3x	foreground	normal	4-bit
-	#define	AT_BG4					//52,xx		4x	background	normal	4-bit
-	#define AT_FGB					//57,xx		9x	foreground	bright 	4-bit
-	#define AT_BGB					//49,48,xx 	10x	background	bright 	4-bit
-	#define AT_FG8					//51,56		38 	foreground	 8-bit 		256 color.
-	#define AT_BG8					//52,56		48 	backgrond	 8-bit 		256 color.
-	#define AT_8BIT					//53		5	Used to select from 256 color pallete mode
-	#define AT_24BIT				//50		2	Used to set RGB Value "true color"
-
-	#define AT_OFF					//50,xx		2x	Toggle off specific attributes
-	#define AT_SGR					//109		m Command suffix.
-
-//Cursor Position
-	#define AT_CSET					//xx,AT_SC,xx,102	f	Cursor Position
-  //#define AT_CSET			 		//xx,AT_SC,xx,72	H	same as f
-	#define AT_CUP					//xx,65				A
-	#define AT_CDN					//xx,66				B
-	#define AT_CFWD					//xx,67				C
-	#define AT_CBWD					//xx,68				D
-	#define AT_SCP					//115				s
-	#define AT_RCP					//117				u
-	#define AT_DSR					//					n
-	
-//Screen Commands
-	#define AT_CLS					//50,74		2J
 
 class ANSITerm {
 
 	public:
-        ANSITerm(Stream *);
-		
+		ANSITerm(void);
+		void begin(Stream &s=Serial, *TERMLEVEL t=VT100_MODE,  *COLORMODE c=4_BIT_COLOR);)
+		void end(void);
+		void print(char[] array);
+		void print(int8_t number);
+		void print(int16_t number);
+		void print(int32_t number);
+		void print(float number);
+		void setColorMode(uint8_t cMode);
+		void setTerminalLevel(uint8_t tLevel);
+		void beep(void);
+		uint16_t read(void);
+		char[] read(void);
+		void cursorShow(void);
+		void cursorHide(void);
+		void cursorXY(uint8_t x, uint8_t y);
+		void cursorUp(uint8_t n);
+		void cursorDown(uint8_t n);
+		void cursorLeft(uint8_t n);
+		void cursorRight(uint8_t n);
+		void cursorSave(void);
+		void cursorRestore(void);
+		uint8_t getCursor(void);
+		void clearScreen(void);
+		void drawBox(uint8_t x, uint8_t y, uint8_t x2, uint8_t y2);
+		void drawLine(uint8_t x, uint8_t y, uint8_t x2, uint8_t y2);
+		void setColor(uint8_t c);
+		void justify(uint8_t j);
     private: 
-        
+        Stream stream;
+		TERMLEVEL termLevel;
+		COLORMODE colorMode;
+		uint8_t transmitBuffer[MAX_BUFFER_LEN];
+		uint8_t receiveBuffer[MAX_BUFFER_LEN];
 };
+
+// User constants for public functions.
+
+//Color mode definitions.
+enum	COLORMODE{4_BIT, 8_BIT, TRUECOLOR};
+
+//Terminal Level definitions
+enum	TERMLEVEL{VT100_MODE, XTERM_MODE, ANSI_FULL};
+//Function key definitions
+#define FN_F1
+#define FN_F2
+#define FN_F3
+#define FN_F4
+#define FN_F5
+#define FN_F6
+#define FN_F7
+#define FN_F8
+#define FN_F9
+#define FN_F10
+#define FN_F11
+#define FN_F12
+//Arrow key definitions
+#define A_UP
+#define A_DOWN
+#define A_LEFT
+#define A_RIGHT
+//Line style definitions
+#define SOLID
+#define DASHED
+#define DOTTED
+#define BOLD
+//Special Characters
+#define
+
+//
+
 
 #endif
