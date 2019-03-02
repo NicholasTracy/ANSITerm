@@ -23,8 +23,7 @@
 //Default settings for ANSITerm constructor (default Serial stream. VT100 terminal level, 4 Bit color mode)
 ANSITerm::ANSITerm()
 {
-	
-	
+
 }
 ANSITerm::begin(Stream &s=Serial, uint8_t t=VT100, uint8_t c=4_BIT) 
 : stream(s), termLevel(t), colorMode(c)
@@ -42,10 +41,41 @@ ANSITerm::setTerminalLevel()
 
 
 }
-ANSITerm::write(char)
+ANSITerm::setColorMode()
 {
 
 
+}
+ANSITerm::getTerminalLevel()
+{
+
+
+}
+ANSITerm::getColorMode()
+{
+
+
+}
+ANSITerm::setRBufferLen()
+{
+
+
+}
+ANSITerm::setTBufferLen()
+{
+
+}
+ANSITerm::getRBufferLen()
+{
+
+}
+ANSITerm::setTBufferLen()
+{
+
+}
+ANSITerm::write(char)
+{
+	
 }
 ANSITerm::beep(void)
 {
@@ -66,3 +96,7 @@ ANSITerm::clear()
 
 }
 ANSITerm::parse()
+{
+
+
+}

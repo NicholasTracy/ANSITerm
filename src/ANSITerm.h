@@ -30,15 +30,23 @@ class ANSITerm {
 
 	public:
 		ANSITerm(void);
-		void begin(Stream &s=Serial, *TERMLEVEL t=VT100_MODE,  *COLORMODE c=4_BIT_COLOR);)
+		void begin(Stream &s=Serial, *TERMLEVEL t=VT100_MODE,  *COLORMODE c=4_BIT_COLOR, );
 		void end(void);
+		void setStream(Stream &s);
+		Stream getStream(void);
+		void setTBufferLength(*long);
+		void setRBufferLength(*long);
+		long getTBufferLength(void);
+		long getRBufferLength(void);
 		void print(char[] array);
 		void print(int8_t number);
 		void print(int16_t number);
 		void print(int32_t number);
 		void print(float number);
-		void setColorMode(uint8_t cMode);
-		void setTerminalLevel(uint8_t tLevel);
+		void setColorMode(color_mode *cMode);
+		void setTerminalLevel(term_level *tLevel);
+		color_mode getColorMode(void);
+		term_level getTerminalLevel(void);
 		void beep(void);
 		uint16_t read(void);
 		char[] read(void);
@@ -55,23 +63,29 @@ class ANSITerm {
 		void clearScreen(void);
 		void drawBox(uint8_t x, uint8_t y, uint8_t x2, uint8_t y2);
 		void drawLine(uint8_t x, uint8_t y, uint8_t x2, uint8_t y2);
-		void setColor(uint8_t c);
-		void justify(uint8_t j);
+		void setFColor();
+		void setBColor();
+			getFColor(void);
+			getBColor(void);
+		void justify(justify_text j);
     private: 
         Stream stream;
-		TERMLEVEL termLevel;
-		COLORMODE colorMode;
-		uint8_t transmitBuffer[MAX_BUFFER_LEN];
-		uint8_t receiveBuffer[MAX_BUFFER_LEN];
+		term_level termLevel;
+		color_mode colorMode;
+		line_style lineStyle;
+		justify_text justifyText;
+		shading_block shade;
+		long maxTxBufferLen;
+		long maxRxBufferLen;
+		uint8_t *transmitBuffer[maxTxBufferLen];
+		uint8_t *receiveBuffer[maxRxBufferLen];
 };
 
 // User constants for public functions.
-
 //Color mode definitions.
-enum	COLORMODE{4_BIT, 8_BIT, TRUECOLOR};
-
+enum	color_mode{4_BIT, 8_BIT, TRUECOLOR};
 //Terminal Level definitions
-enum	TERMLEVEL{VT100_MODE, XTERM_MODE, ANSI_FULL};
+enum	term_level{VT100_MODE, XTERM_MODE, ANSI_FULL};
 //Function key definitions
 #define FN_F1
 #define FN_F2
@@ -91,10 +105,12 @@ enum	TERMLEVEL{VT100_MODE, XTERM_MODE, ANSI_FULL};
 #define A_LEFT
 #define A_RIGHT
 //Line style definitions
-#define SOLID
-#define DASHED
-#define DOTTED
-#define BOLD
+enum line_style{LIGHT, WIDE, DOTTED, DASHED, DOUBLE};
+//Text justifications
+enum justify_text{LEFT, RIGHT, CENTER};
+//Shading
+enum shading_block{NONE, LIGHT, MEDIUM, DARK};
+
 //Special Characters
 #define
 
