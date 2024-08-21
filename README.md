@@ -4,7 +4,7 @@
 
 ---
 
-### <p align="center">WARNING: This is the Development Branch. This code may not work as desired. This is where new features and bugfixes will be tested. Only use this if you want to test prerelease features and bug fixes. If you find a bug, please check the [Issues](https://github.com/NicholasTracy/ANSITerm/issues) section to see if it has already been brought to my attention. If it isn't there, please create a new issue and include as much detail as possible so that I can recreate the bug you encountered.</p>
+### <p align="center">WARNING: This code may not work as desired. This is a work in progress and currenlty under testing. Only use this if you want to test for yourself. If you find a bug, please check the [Issues](https://github.com/NicholasTracy/ANSITerm/issues) section to see if it has already been brought to my attention. If it isn't there, please create a new issue and include as much detail as possible so that I can recreate the bug you encountered.</p>
 
 ---
 
@@ -185,7 +185,6 @@ void loop() {
     // Main loop
 }
 ```
-
 ---
 
 ### License:
@@ -197,12 +196,13 @@ General Public License v3.
 No warranties or guarentees are made, the library is provided as is.
 
 Please refer to the documentation provided for more information.
+=======
+[License Information]( ANSITerm/LICENSE )
 
 
 ### Author:
 
-
-Nicholas Tracy <https://github.com/NicholasTracy>
+Nicholas Tracy [Github](https://github.com/NicholasTracy)
 
 
 Original Idea and bases for this library credited to:
