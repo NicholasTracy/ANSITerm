@@ -10,9 +10,9 @@
     install:
       - ln -s $PWD /usr/local/share/arduino/libraries/ANSITerm
     script:
-      - arduino --verify --board ${BOARD} $PWD/examples/TerminalTest/TerminalTest.ino
-    # - arduino --verify --board ${BOARD} $PWD/examples/.ino
-    # - arduino --verify --board ${BOARD} $PWD/examples/.ino
+      - arduino --verify --board ${BOARD} $PWD/examples/AdvancedExample/AdvancedExample.ino
+      - arduino --verify --board ${BOARD} $PWD/examples/BasicExample/BasicExample.ino
+      - arduino --verify --board ${BOARD} $PWD/examples/GraphicsExample/GraphicsExample.ino
     notifications:
       email:
         on_success: change
