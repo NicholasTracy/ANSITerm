@@ -1,13 +1,8 @@
 /* ANSITerm Library
  * https://github.com/NicholasTracy/ANSITerm
- * 2018 Nicholas Tracy <https://github.com/NicholasTracy>
+ * 2024 Nicholas Tracy <https://github.com/NicholasTracy>
  * ---------------
  * constants.h
- * ---------------
- * defines hex values for human readable sequence names.
- * ---------------
- * Provides full ANSI escape sequence control of capable terminals over the Arduino stream class.
- * Primarilly for use with virtual terms e.g. PuTTy and xTerm 
  * ---------------
  * Original concept based on the BasicTerm library.
  * https://github.com/nottwo/BasicTerm
@@ -17,69 +12,112 @@
  * ---------------
  */
  
- #ifndef _constants_h_
-#define _constants_h_
+#ifndef CONSTANTS_H
+#define CONSTANTS_H
 
-//All ASCII codes are in hex bytes.
-//This reduces the code footprint and speeds up the stream by using a byte array and write.
+// ANSI escape codes for screen and cursor control
+#define ANSI_CLEAR_SCREEN          "\033[2J"
+#define ANSI_SET_CURSOR_POS        "\033[%d;%dH"
+#define ANSI_CURSOR_UP             "\033[%dA"
+#define ANSI_CURSOR_DOWN           "\033[%dB"
+#define ANSI_CURSOR_FORWARD        "\033[%dC"
+#define ANSI_CURSOR_BACKWARD       "\033[%dD"
+#define ANSI_CURSOR_HIDE           "\033[?25l"
+#define ANSI_CURSOR_SHOW           "\033[?25h"
+#define ANSI_CURSOR_BLINK          "\033[?12h"
+#define ANSI_CURSOR_NO_BLINK       "\033[?12l"
 
-//Escape Sequence Start
-	#define AT_ESC			 					//27		ESC
-	
-//Other ASCII
-	#define AT_NULL							//00		Null
-	#define AT_SC			 					//59		';' Used to chain some values in certain commands.
-	#define AT_C									//58		':' Used to chain some values, alternative used by some terminals
-	#define AT_DEL								//127	Delete
-	#define AT_?									//63		Literal '?'
-	#define AT_BELL							//07		Bell
-	
-//Set Text Attributes
-	#define AT_NORMAL						//48		0
-	#define AT_BOLD 							//49		1
-	#define AT_FAINT							//50		2
-	#define AT_ITAL								//51		3 Not Widely Supported
-	#define AT_UNDERSCORE			//52		4
-	#define AT_BLINK							//53		5
-	#define AT_RBLINK						//54		6 Not Widely Supported
-	#define AT_REVERSE					//55		7
-	#define AT_CONCEALED				//56		8 Not Widely Supported
-	#define AT_STRIKE						//57		9
-	
-	#define AT_BLACK							//48		0
-	#define AT_RED								//49		1
-	#define AT_GREEN 						//50		2
-	#define AT_YELLOW 					//51		3
-	#define AT_BLUE							//52		4
-	#define AT_MAGENTA					//53		5
-	#define AT_CYAN							//54		6
-	#define AT_WHITE							//55		7
-	
-	#define AT_FG4								//51,xx			3x	foreground	normal	4-bit
-	#define AT_BG4								//52,xx			4x	background	normal	4-bit
-	#define AT_FGB								//57,xx			9x	foreground	bright 	4-bit
-	#define AT_BGB								//49,48,xx 	10x	background	bright 	4-bit
-	#define AT_FG8								//51,56			38 	foreground	 8-bit 		256 color.
-	#define AT_BG8								//52,56			48 	backgrond	 8-bit 		256 color.
-	#define AT_8BIT								//53				5		Used to select from 256 color pallete mode
-	#define AT_24BIT							//50				2		Used to set RGB Value "true color"
+// ANSI escape codes for color management
+#define ANSI_SET_TEXT_COLOR        "\033[38;5;%dm"
+#define ANSI_SET_BACKGROUND_COLOR  "\033[48;5;%dm"
+#define ANSI_RESET_FORMATTING      "\033[0m"
 
-	#define AT_OFF								//50,xx			2x	Toggle off specific attributes
-	#define AT_SGR								//109			m 	Command suffix.
+// ANSI box-drawing characters
+#define ANSI_BOX_DOUBLE_HORIZONTAL  "\u2550"  // ═
+#define ANSI_BOX_DOUBLE_VERTICAL    "\u2551"  // ║
+#define ANSI_BOX_DOUBLE_TOP_LEFT    "\u2554"  // ╔
+#define ANSI_BOX_DOUBLE_TOP_RIGHT   "\u2557"  // ╗
+#define ANSI_BOX_DOUBLE_BOTTOM_LEFT "\u255A"  // ╚
+#define ANSI_BOX_DOUBLE_BOTTOM_RIGHT "\u255D" // ╝
+#define ANSI_BOX_DOUBLE_T_INTERSECT "\u2566"  // ╦
+#define ANSI_BOX_DOUBLE_L_INTERSECT "\u2560"  // ╠
+#define ANSI_BOX_DOUBLE_R_INTERSECT "\u2563"  // ╣
+#define ANSI_BOX_DOUBLE_B_INTERSECT "\u2569"  // ╩
+#define ANSI_BOX_DOUBLE_CROSS       "\u256C"  // ╬
 
-//Cursor Position
-	#define AT_CSET							//xx,AT_SC,xx,102		f	Cursor Position
-  //#define AT_CSET			 				//xx,AT_SC,xx,72		H	same as f
-	#define AT_CUP								//xx,65							A
-	#define AT_CDN								//xx,66							B
-	#define AT_CFWD							//xx,67							C
-	#define AT_CBWD							//xx,68							D
-	#define AT_SCP								//115							s
-	#define AT_RCP								//117							u
-	#define AT_DSR								//									n
-	
-//Screen Commands
-	#define AT_CLS								//50,74		2J
+#define ANSI_BOX_HORIZONTAL   "\u2500"  // ─
+#define ANSI_BOX_VERTICAL     "\u2502"  // │
+#define ANSI_BOX_TOP_LEFT     "\u250C"  // ┌
+#define ANSI_BOX_TOP_RIGHT    "\u2510"  // ┐
+#define ANSI_BOX_BOTTOM_LEFT  "\u2514"  // └
+#define ANSI_BOX_BOTTOM_RIGHT "\u2518"  // ┘
+#define ANSI_BOX_T_INTERSECT  "\u252C"  // ┬
+#define ANSI_BOX_L_INTERSECT  "\u251C"  // ├
+#define ANSI_BOX_R_INTERSECT  "\u2524"  // ┤
+#define ANSI_BOX_B_INTERSECT  "\u2534"  // ┴
+#define ANSI_BOX_CROSS        "\u253C"  // ┼
 
 
-#endif
+// Block Elements
+#define ANSI_BLOCK_LIGHT_SHADE   "\u2591"  // ░ Light Shade
+#define ANSI_BLOCK_MEDIUM_SHADE  "\u2592"  // ▒ Medium Shade
+#define ANSI_BLOCK_DARK_SHADE    "\u2593"  // ▓ Dark Shade
+#define ANSI_BLOCK_FULL          "\u2588"  // █ Full Block
+#define ANSI_BLOCK_LOWER_HALF    "\u2584"  // ▄ Lower Half Block
+#define ANSI_BLOCK_UPPER_HALF    "\u2580"  // ▀ Upper Half Block
+#define ANSI_BLOCK_LEFT_HALF     "\u258C"  // ▌ Left Half Block
+#define ANSI_BLOCK_RIGHT_HALF    "\u2590"  // ▐ Right Half Block
+
+//Arrows and Pointers
+#define ANSI_ARROW_UP            "\u2191"  // ↑
+#define ANSI_ARROW_DOWN          "\u2193"  // ↓
+#define ANSI_ARROW_LEFT          "\u2190"  // ←
+#define ANSI_ARROW_RIGHT         "\u2192"  // →
+#define ANSI_ARROW_UP_DOWN       "\u2195"  // ↕
+#define ANSI_ARROW_LEFT_RIGHT    "\u2194"  // ↔
+#define ANSI_POINTER_LEFT        "\u25C4"  // ◄
+#define ANSI_POINTER_RIGHT       "\u25BA"  // ►
+
+//Math Symbols
+#define ANSI_PLUS_MINUS          "\u00B1"  // ±
+#define ANSI_MULTIPLICATION      "\u00D7"  // ×
+#define ANSI_DIVISION            "\u00F7"  // ÷
+#define ANSI_INFINITY            "\u221E"  // ∞
+#define ANSI_SUMMATION           "\u2211"  // ∑
+#define ANSI_SQUARE_ROOT         "\u221A"  // √
+#define ANSI_ANGLE               "\u2220"  // ∠
+
+//Shapes
+#define ANSI_TRIANGLE_UP         "\u25B2"  // ▲
+#define ANSI_TRIANGLE_DOWN       "\u25BC"  // ▼
+#define ANSI_TRIANGLE_LEFT       "\u25C0"  // ◀
+#define ANSI_TRIANGLE_RIGHT      "\u25B6"  // ▶
+#define ANSI_CIRCLE              "\u25CF"  // ●
+#define ANSI_HOLLOW_CIRCLE       "\u25CB"  // ○
+#define ANSI_SQUARE              "\u25A0"  // ■
+#define ANSI_HOLLOW_SQUARE       "\u25A1"  // □
+#define ANSI_DIAMOND             "\u25C6"  // ◆
+#define ANSI_HOLLOW_DIAMOND      "\u25C7"  // ◇
+#define ANSI_HEART               "\u2665"  // ♥
+#define ANSI_SPADE               "\u2660"  // ♠
+#define ANSI_CLUB                "\u2663"  // ♣
+#define ANSI_SMILEY              "\u263A"  // ☺
+#define ANSI_SUN                 "\u263C"  // ☼
+#define ANSI_MOON                "\u263E"  // ☾
+
+//Miscellaneous Symbols
+#define ANSI_CHECKMARK           "\u2713"  // ✓
+#define ANSI_CROSSMARK           "\u2717"  // ✗
+#define ANSI_BULLET              "\u2022"  // •
+#define ANSI_STAR                "\u2605"  // ★
+#define ANSI_HOLLOW_STAR         "\u2606"  // ☆
+#define ANSI_MALE                "\u2642"  // ♂
+#define ANSI_FEMALE              "\u2640"  // ♀
+#define ANSI_MUSIC_NOTE          "\u266A"  // ♪
+#define ANSI_PEACE               "\u262E"  // ☮
+#define ANSI_YIN_YANG            "\u262F"  // ☯
+#define ANSI_SNOWFLAKE           "\u2744"  // ❄
+
+#endif // CONSTANTS_H
+
+
