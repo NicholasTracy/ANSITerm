@@ -1,42 +1,38 @@
-    language: c
-    before_install:
-      - "/sbin/start-stop-daemon --start --quiet --pidfile /tmp/custom_xvfb_1.pid --make-pidfile --background --exec /usr/bin/Xvfb -- :1 -ac -screen 0 1280x1024x16"
-      - sleep 3
-      - export DISPLAY=:1.0
-      - wget http://downloads.arduino.cc/arduino-1.6.5-linux64.tar.xz
-      - tar xf arduino-1.6.5-linux64.tar.xz
-      - sudo mv arduino-1.6.5 /usr/local/share/arduino
-      - sudo ln -s /usr/local/share/arduino/arduino /usr/local/bin/arduino
-    install:
-      - ln -s $PWD /usr/local/share/arduino/libraries/ANSITerm
-    script:
-      - arduino --verify --board ${BOARD} $PWD/examples/AdvancedExample/AdvancedExample.ino
-      - arduino --verify --board ${BOARD} $PWD/examples/BasicExample/BasicExample.ino
-      - arduino --verify --board ${BOARD} $PWD/examples/GraphicsExample/GraphicsExample.ino
-    notifications:
-      email:
-        on_success: change
-        on_failure: change
-    env:
-      - BOARD=arduino:avr:uno
-    # - BOARD=arduino:avr:yun
-    # - BOARD=arduino:avr:diecimila:cpu=atmega168
-    # - BOARD=arduino:avr:diecimila:cpu=atmega328
-      - BOARD=arduino:avr:nano:cpu=atmega168
-      - BOARD=arduino:avr:nano:cpu=atmega328
-      - BOARD=arduino:avr:mega:cpu=atmega1280
-      - BOARD=arduino:avr:mega:cpu=atmega2560
-    # - BOARD=arduino:avr:megaADK
-      - BOARD=arduino:avr:leonardo
-    # - BOARD=arduino:avr:micro
-    # - BOARD=arduino:avr:esplora
-    # - BOARD=arduino:avr:mini:cpu=atmega168
-    # - BOARD=arduino:avr:mini:cpu=atmega328
-    # - BOARD=arduino:avr:ethernet
-    # - BOARD=arduino:avr:bt:cpu=atmega168
-    # - BOARD=arduino:avr:bt:cpu=atmega328
-    # - BOARD=arduino:avr:lilypad:cpu=atmega168
-    # - BOARD=arduino:avr:lilypad:cpu=atmega328
-    # - BOARD=arduino:avr:pro:cpu=atmega168
-    # - BOARD=arduino:avr:pro:cpu=atmega328
-    # - BOARD=arduino:sam:arduino_due_x
+language: cpp
+dist: focal
+
+addons:
+  apt:
+    packages:
+      - arduino
+      - arduino-mk
+      - python3
+      - python3-pip
+
+before_install:
+  - sudo apt-get update
+  - sudo apt-get install -y python3-serial
+
+install:
+  - pip3 install pyserial
+
+script:
+  # Add your Arduino setup commands here
+  - export ARDUINO_DIR=/usr/share/arduino
+  - export PATH=$ARDUINO_DIR:$PATH
+  - export BOARDS="arduino:avr:uno arduino:avr:mega arduino:samd:mkr1000" # List your boards here
+
+  # Compile the library for each board
+  - |
+    for BOARD in $BOARDS; do
+      echo "Compiling for $BOARD"
+      arduino --verify --board $BOARD --port /dev/ttyUSB0 --pref build.path=build-$BOARD examples/YourExample/YourExample.ino
+    done
+
+  # Run tests by uploading the sketch and checking the serial output
+  - |
+    for BOARD in $BOARDS; do
+      echo "Running tests on $BOARD"
+      arduino --upload --board $BOARD --port /dev/ttyUSB0 --pref build.path=build-$BOARD examples/YourExample/YourExample.ino
+      python3 validate_serial_output.py /dev/ttyUSB0
+    done

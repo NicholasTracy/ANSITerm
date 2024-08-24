@@ -27,7 +27,6 @@
  */
 
 #include "ANSITerm.h"
-#include <SD.h> // For handling .ans file reading, assuming SD card is used
 
 // Constructor: Initializes the ANSITerm object with a specified Stream (e.g., Serial)
 ANSITerm::ANSITerm(Stream &stream) : _stream(stream) {}
