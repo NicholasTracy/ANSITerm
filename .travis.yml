@@ -26,13 +26,13 @@ script:
   - |
     for BOARD in $BOARDS; do
       echo "Compiling for $BOARD"
-      arduino --verify --board $BOARD --port /dev/ttyUSB0 --pref build.path=build-$BOARD examples/YourExample/YourExample.ino
+      arduino --verify --board $BOARD --port /dev/ttyUSB0 --pref build.path=build-$BOARD examples/BasicExample/BasicExample.ino
     done
 
   # Run tests by uploading the sketch and checking the serial output
   - |
     for BOARD in $BOARDS; do
       echo "Running tests on $BOARD"
-      arduino --upload --board $BOARD --port /dev/ttyUSB0 --pref build.path=build-$BOARD examples/YourExample/YourExample.ino
+      arduino --upload --board $BOARD --port /dev/ttyUSB0 --pref build.path=build-$BOARD examples/BasicExample/BasicExample.ino
       python3 validate_serial_output.py /dev/ttyUSB0
     done
