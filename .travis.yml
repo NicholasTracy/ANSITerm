@@ -4,11 +4,8 @@ dist: focal
 addons:
   apt:
     packages:
-      - arduino
-      - arduino-mk
       - python3
       - python3-pip
-      - xvfb   # Add xvfb to handle headless mode
 
 before_install:
   - sudo apt-get update
@@ -16,24 +13,26 @@ before_install:
 
 install:
   - pip3 install pyserial
+  - wget https://downloads.arduino.cc/arduino-cli/arduino-cli_latest_Linux_64bit.tar.gz
+  - tar -xzf arduino-cli_latest_Linux_64bit.tar.gz
+  - sudo mv arduino-cli /usr/local/bin/
+  - arduino-cli config init
+  - arduino-cli core update-index
+  - arduino-cli core install arduino:avr
+  - arduino-cli core install arduino:samd
 
 script:
-  # Add your Arduino setup commands here
-  - export ARDUINO_DIR=/usr/share/arduino
-  - export PATH=$ARDUINO_DIR:$PATH
-  - export BOARDS="arduino:avr:uno arduino:avr:mega arduino:samd:mkr1000" # List your boards here
-
-  # Compile the library for each board using xvfb-run
+  - export BOARDS="arduino:avr:uno arduino:avr:mega arduino:samd:mkr1000"
+  
   - |
     for BOARD in $BOARDS; do
       echo "Compiling for $BOARD"
-      xvfb-run arduino --verify --board $BOARD --pref build.path=build-$BOARD examples/BasicExample/BasicExample.ino
+      arduino-cli compile --fqbn $BOARD examples/BasicExample/BasicExample.ino
     done
 
-  # Run tests by uploading the sketch and checking the serial output using xvfb-run
   - |
     for BOARD in $BOARDS; do
       echo "Running tests on $BOARD"
-      xvfb-run arduino --upload --board $BOARD --pref build.path=build-$BOARD examples/BasicExample/BasicExample.ino
+      arduino-cli upload --fqbn $BOARD --port /dev/ttyUSB0 examples/BasicExample/BasicExample.ino
       python3 validate_serial_output.py /dev/ttyUSB0
     done
