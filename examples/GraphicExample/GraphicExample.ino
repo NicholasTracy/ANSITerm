@@ -30,7 +30,7 @@ ANSITerm terminal(Serial);
 // Game constants
 const char PLAYER_CHAR = ANSI_SMILEY;
 const char WALL_CHAR = ANSI_BLOCK_HALF;
-const char ENEMY_CHAR = ANSI_SPADE;
+const char ENEMY_CHAR = ANSI_SKULL;
 const char PROJECTILE_CHAR = '*';
 
 const int SCREEN_WIDTH = 40;

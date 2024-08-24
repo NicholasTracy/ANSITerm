@@ -54,19 +54,19 @@ void setup() {
     // === Basic Example Operations ===
 
     // Display a welcome message
-    terminal.setTextColorByName("yellow");
+    terminal.setTextColor("yellow");
     terminal.writeTextAt(2, 2, "Welcome to ANSITerm!");
 
     // Draw a simple box with single-line characters
-    terminal.setTextColorByName("white");
+    terminal.setTextColor("white");
     terminal.drawBox(4, 5, 8, 40);
 
     // Write some text inside the box
-    terminal.setTextColorByName("green");
+    terminal.setTextColor("green");
     terminal.writeTextAt(6, 10, "This is a box drawn with ANSI characters.");
 
     // Draw a button with centered text
-    terminal.setTextColorByName("cyan");
+    terminal.setTextColor("cyan");
     terminal.drawButton(10, 20, 12, 50, "Click Me!");
 
     // Event loop to handle button click

@@ -46,7 +46,7 @@
 #define ANSI_SET_BACKGROUND_COLOR  "\033[48;5;%dm"  // Sets background color to ANSI color %d
 #define ANSI_RESET_FORMATTING      "\033[0m"        // Resets all text formatting to default
 
-// ANSI box-drawing characters
+// ANSI box-drawing characters (single-line)
 #define ANSI_BOX_HORIZONTAL        "\u2500"  // ─ Single-line horizontal
 #define ANSI_BOX_VERTICAL          "\u2502"  // │ Single-line vertical
 #define ANSI_BOX_TOP_LEFT          "\u250C"  // ┌ Single-line top-left corner
@@ -59,7 +59,7 @@
 #define ANSI_BOX_B_INTERSECT       "\u2534"  // ┴ Single-line T intersection (bottom)
 #define ANSI_BOX_CROSS             "\u253C"  // ┼ Single-line cross intersection
 
-// ANSI double-line box-drawing characters
+// ANSI box-drawing characters (double-line)
 #define ANSI_BOX_DOUBLE_HORIZONTAL  "\u2550"  // ═ Double-line horizontal
 #define ANSI_BOX_DOUBLE_VERTICAL    "\u2551"  // ║ Double-line vertical
 #define ANSI_BOX_DOUBLE_TOP_LEFT    "\u2554"  // ╔ Double-line top-left corner
@@ -91,5 +91,23 @@
 #define ANSI_DIAMOND               "\u2666"  // ♦ Diamond
 #define ANSI_CLUB                  "\u2663"  // ♣ Club
 #define ANSI_SPADE                 "\u2660"  // ♠ Spade
+#define ANSI_STAR                  "\u2605"  // ★ Star
+#define ANSI_SKULL                 "\u2620"  // ☠ Skull
+#define ANSI_MUSIC_NOTE            "\u266A"  // ♪ Music note
+#define ANSI_COPYRIGHT             "\u00A9"  // © Copyright symbol
+#define ANSI_REGISTERED            "\u00AE"  // ® Registered symbol
+#define ANSI_TRADEMARK             "\u2122"  // ™ Trademark symbol
+#define ANSI_DEGREE                "\u00B0"  // ° Degree symbol
+#define ANSI_INFINITY              "\u221E"  // ∞ Infinity symbol
+
+// ANSI geometric shapes
+#define ANSI_TRIANGLE_UP           "\u25B2"  // ▲ Up Triangle
+#define ANSI_TRIANGLE_DOWN         "\u25BC"  // ▼ Down Triangle
+#define ANSI_TRIANGLE_LEFT         "\u25C0"  // ◀ Left Triangle
+#define ANSI_TRIANGLE_RIGHT        "\u25B6"  // ▶ Right Triangle
+#define ANSI_CIRCLE                "\u25CF"  // ● Full Circle
+#define ANSI_CIRCLE_HOLLOW         "\u25CB"  // ○ Hollow Circle
+#define ANSI_SQUARE                "\u25A0"  // ■ Full Square
+#define ANSI_SQUARE_HOLLOW         "\u25A1"  // □ Hollow Square
 
 #endif // CONSTANTS_H
