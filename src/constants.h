@@ -1,123 +1,95 @@
-/* ANSITerm Library
+/*
+ * ANSITerm Library - Arduino ANSI Terminal Control Library
  * https://github.com/NicholasTracy/ANSITerm
- * 2024 Nicholas Tracy <https://github.com/NicholasTracy>
- * ---------------
- * constants.h
- * ---------------
- * Original concept based on the BasicTerm library.
- * https://github.com/nottwo/BasicTerm
- * 2011 Trannie Carter <borys@nottwo.org>
- * ---------------
- * Licensed for use under the terms of the General Public License v3
- * ---------------
+ * 
+ * Author: Nicholas Tracy (2024)
+ * https://github.com/NicholasTracy
+ *
+ * File: ANSITerm.h
+ * 
+ * Description:
+ * ANSITerm is an Arduino library designed to provide advanced ANSI escape sequence control 
+ * for terminals via the Stream class. This library allows users to create interactive 
+ * and graphical terminal interfaces, supporting a wide range of text formatting, color 
+ * management, drawing capabilities, and mouse interaction.
+ * 
+ * The original concept for this library is based on the BasicTerm library by Trannie Carter.
+ * https://github.com/nottwo/BasicTerm (2011)
+ * 
+ * License:
+ * This library is licensed under the GNU General Public License v3 (GPLv3).
+ * You are free to use, modify, and distribute this library, provided that you comply with 
+ * the terms of the GPLv3. There are no warranties, expressed or implied, provided with 
+ * this software.
+ * 
+ * For more details, see the full license at: https://www.gnu.org/licenses/gpl-3.0.en.html
+ * 
  */
  
 #ifndef CONSTANTS_H
 #define CONSTANTS_H
 
 // ANSI escape codes for screen and cursor control
-#define ANSI_CLEAR_SCREEN          "\033[2J"
-#define ANSI_SET_CURSOR_POS        "\033[%d;%dH"
-#define ANSI_CURSOR_UP             "\033[%dA"
-#define ANSI_CURSOR_DOWN           "\033[%dB"
-#define ANSI_CURSOR_FORWARD        "\033[%dC"
-#define ANSI_CURSOR_BACKWARD       "\033[%dD"
-#define ANSI_CURSOR_HIDE           "\033[?25l"
-#define ANSI_CURSOR_SHOW           "\033[?25h"
-#define ANSI_CURSOR_BLINK          "\033[?12h"
-#define ANSI_CURSOR_NO_BLINK       "\033[?12l"
+#define ANSI_CLEAR_SCREEN          "\033[2J"        // Clears the terminal screen
+#define ANSI_SET_CURSOR_POS        "\033[%d;%dH"    // Sets cursor position to row %d and column %d
+#define ANSI_CURSOR_UP             "\033[%dA"       // Moves cursor up by %d rows
+#define ANSI_CURSOR_DOWN           "\033[%dB"       // Moves cursor down by %d rows
+#define ANSI_CURSOR_FORWARD        "\033[%dC"       // Moves cursor forward (right) by %d columns
+#define ANSI_CURSOR_BACKWARD       "\033[%dD"       // Moves cursor backward (left) by %d columns
+#define ANSI_CURSOR_HIDE           "\033[?25l"      // Hides the cursor
+#define ANSI_CURSOR_SHOW           "\033[?25h"      // Shows the cursor
+#define ANSI_CURSOR_BLINK          "\033[?12h"      // Enables cursor blinking
+#define ANSI_CURSOR_NO_BLINK       "\033[?12l"      // Disables cursor blinking
 
 // ANSI escape codes for color management
-#define ANSI_SET_TEXT_COLOR        "\033[38;5;%dm"
-#define ANSI_SET_BACKGROUND_COLOR  "\033[48;5;%dm"
-#define ANSI_RESET_FORMATTING      "\033[0m"
+#define ANSI_SET_TEXT_COLOR        "\033[38;5;%dm"  // Sets text color to ANSI color %d
+#define ANSI_SET_BACKGROUND_COLOR  "\033[48;5;%dm"  // Sets background color to ANSI color %d
+#define ANSI_RESET_FORMATTING      "\033[0m"        // Resets all text formatting to default
 
 // ANSI box-drawing characters
-#define ANSI_BOX_DOUBLE_HORIZONTAL  "\u2550"  // ═
-#define ANSI_BOX_DOUBLE_VERTICAL    "\u2551"  // ║
-#define ANSI_BOX_DOUBLE_TOP_LEFT    "\u2554"  // ╔
-#define ANSI_BOX_DOUBLE_TOP_RIGHT   "\u2557"  // ╗
-#define ANSI_BOX_DOUBLE_BOTTOM_LEFT "\u255A"  // ╚
-#define ANSI_BOX_DOUBLE_BOTTOM_RIGHT "\u255D" // ╝
-#define ANSI_BOX_DOUBLE_T_INTERSECT "\u2566"  // ╦
-#define ANSI_BOX_DOUBLE_L_INTERSECT "\u2560"  // ╠
-#define ANSI_BOX_DOUBLE_R_INTERSECT "\u2563"  // ╣
-#define ANSI_BOX_DOUBLE_B_INTERSECT "\u2569"  // ╩
-#define ANSI_BOX_DOUBLE_CROSS       "\u256C"  // ╬
+#define ANSI_BOX_HORIZONTAL        "\u2500"  // ─ Single-line horizontal
+#define ANSI_BOX_VERTICAL          "\u2502"  // │ Single-line vertical
+#define ANSI_BOX_TOP_LEFT          "\u250C"  // ┌ Single-line top-left corner
+#define ANSI_BOX_TOP_RIGHT         "\u2510"  // ┐ Single-line top-right corner
+#define ANSI_BOX_BOTTOM_LEFT       "\u2514"  // └ Single-line bottom-left corner
+#define ANSI_BOX_BOTTOM_RIGHT      "\u2518"  // ┘ Single-line bottom-right corner
+#define ANSI_BOX_T_INTERSECT       "\u252C"  // ┬ Single-line T intersection (top)
+#define ANSI_BOX_L_INTERSECT       "\u251C"  // ├ Single-line T intersection (left)
+#define ANSI_BOX_R_INTERSECT       "\u2524"  // ┤ Single-line T intersection (right)
+#define ANSI_BOX_B_INTERSECT       "\u2534"  // ┴ Single-line T intersection (bottom)
+#define ANSI_BOX_CROSS             "\u253C"  // ┼ Single-line cross intersection
 
-#define ANSI_BOX_HORIZONTAL   "\u2500"  // ─
-#define ANSI_BOX_VERTICAL     "\u2502"  // │
-#define ANSI_BOX_TOP_LEFT     "\u250C"  // ┌
-#define ANSI_BOX_TOP_RIGHT    "\u2510"  // ┐
-#define ANSI_BOX_BOTTOM_LEFT  "\u2514"  // └
-#define ANSI_BOX_BOTTOM_RIGHT "\u2518"  // ┘
-#define ANSI_BOX_T_INTERSECT  "\u252C"  // ┬
-#define ANSI_BOX_L_INTERSECT  "\u251C"  // ├
-#define ANSI_BOX_R_INTERSECT  "\u2524"  // ┤
-#define ANSI_BOX_B_INTERSECT  "\u2534"  // ┴
-#define ANSI_BOX_CROSS        "\u253C"  // ┼
+// ANSI double-line box-drawing characters
+#define ANSI_BOX_DOUBLE_HORIZONTAL  "\u2550"  // ═ Double-line horizontal
+#define ANSI_BOX_DOUBLE_VERTICAL    "\u2551"  // ║ Double-line vertical
+#define ANSI_BOX_DOUBLE_TOP_LEFT    "\u2554"  // ╔ Double-line top-left corner
+#define ANSI_BOX_DOUBLE_TOP_RIGHT   "\u2557"  // ╗ Double-line top-right corner
+#define ANSI_BOX_DOUBLE_BOTTOM_LEFT "\u255A"  // ╚ Double-line bottom-left corner
+#define ANSI_BOX_DOUBLE_BOTTOM_RIGHT "\u255D" // ╝ Double-line bottom-right corner
+#define ANSI_BOX_DOUBLE_T_INTERSECT "\u2566"  // ╦ Double-line T intersection (top)
+#define ANSI_BOX_DOUBLE_L_INTERSECT "\u2560"  // ╠ Double-line T intersection (left)
+#define ANSI_BOX_DOUBLE_R_INTERSECT "\u2563"  // ╣ Double-line T intersection (right)
+#define ANSI_BOX_DOUBLE_B_INTERSECT "\u2569"  // ╩ Double-line T intersection (bottom)
+#define ANSI_BOX_DOUBLE_CROSS       "\u256C"  // ╬ Double-line cross intersection
 
+// ANSI block elements
+#define ANSI_BLOCK_FULL            "\u2588"  // █ Full Block
+#define ANSI_BLOCK_HALF            "\u2592"  // ▒ Medium Shade Block
+#define ANSI_BLOCK_LIGHT           "\u2591"  // ░ Light Shade Block
 
-// Block Elements
-#define ANSI_BLOCK_LIGHT_SHADE   "\u2591"  // ░ Light Shade
-#define ANSI_BLOCK_MEDIUM_SHADE  "\u2592"  // ▒ Medium Shade
-#define ANSI_BLOCK_DARK_SHADE    "\u2593"  // ▓ Dark Shade
-#define ANSI_BLOCK_FULL          "\u2588"  // █ Full Block
-#define ANSI_BLOCK_LOWER_HALF    "\u2584"  // ▄ Lower Half Block
-#define ANSI_BLOCK_UPPER_HALF    "\u2580"  // ▀ Upper Half Block
-#define ANSI_BLOCK_LEFT_HALF     "\u258C"  // ▌ Left Half Block
-#define ANSI_BLOCK_RIGHT_HALF    "\u2590"  // ▐ Right Half Block
+// ANSI arrow symbols
+#define ANSI_ARROW_UP              "\u2191"  // ↑ Up Arrow
+#define ANSI_ARROW_DOWN            "\u2193"  // ↓ Down Arrow
+#define ANSI_ARROW_LEFT            "\u2190"  // ← Left Arrow
+#define ANSI_ARROW_RIGHT           "\u2192"  // → Right Arrow
 
-//Arrows and Pointers
-#define ANSI_ARROW_UP            "\u2191"  // ↑
-#define ANSI_ARROW_DOWN          "\u2193"  // ↓
-#define ANSI_ARROW_LEFT          "\u2190"  // ←
-#define ANSI_ARROW_RIGHT         "\u2192"  // →
-#define ANSI_ARROW_UP_DOWN       "\u2195"  // ↕
-#define ANSI_ARROW_LEFT_RIGHT    "\u2194"  // ↔
-#define ANSI_POINTER_LEFT        "\u25C4"  // ◄
-#define ANSI_POINTER_RIGHT       "\u25BA"  // ►
-
-//Math Symbols
-#define ANSI_PLUS_MINUS          "\u00B1"  // ±
-#define ANSI_MULTIPLICATION      "\u00D7"  // ×
-#define ANSI_DIVISION            "\u00F7"  // ÷
-#define ANSI_INFINITY            "\u221E"  // ∞
-#define ANSI_SUMMATION           "\u2211"  // ∑
-#define ANSI_SQUARE_ROOT         "\u221A"  // √
-#define ANSI_ANGLE               "\u2220"  // ∠
-
-//Shapes
-#define ANSI_TRIANGLE_UP         "\u25B2"  // ▲
-#define ANSI_TRIANGLE_DOWN       "\u25BC"  // ▼
-#define ANSI_TRIANGLE_LEFT       "\u25C0"  // ◀
-#define ANSI_TRIANGLE_RIGHT      "\u25B6"  // ▶
-#define ANSI_CIRCLE              "\u25CF"  // ●
-#define ANSI_HOLLOW_CIRCLE       "\u25CB"  // ○
-#define ANSI_SQUARE              "\u25A0"  // ■
-#define ANSI_HOLLOW_SQUARE       "\u25A1"  // □
-#define ANSI_DIAMOND             "\u25C6"  // ◆
-#define ANSI_HOLLOW_DIAMOND      "\u25C7"  // ◇
-#define ANSI_HEART               "\u2665"  // ♥
-#define ANSI_SPADE               "\u2660"  // ♠
-#define ANSI_CLUB                "\u2663"  // ♣
-#define ANSI_SMILEY              "\u263A"  // ☺
-#define ANSI_SUN                 "\u263C"  // ☼
-#define ANSI_MOON                "\u263E"  // ☾
-
-//Miscellaneous Symbols
-#define ANSI_CHECKMARK           "\u2713"  // ✓
-#define ANSI_CROSSMARK           "\u2717"  // ✗
-#define ANSI_BULLET              "\u2022"  // •
-#define ANSI_STAR                "\u2605"  // ★
-#define ANSI_HOLLOW_STAR         "\u2606"  // ☆
-#define ANSI_MALE                "\u2642"  // ♂
-#define ANSI_FEMALE              "\u2640"  // ♀
-#define ANSI_MUSIC_NOTE          "\u266A"  // ♪
-#define ANSI_PEACE               "\u262E"  // ☮
-#define ANSI_YIN_YANG            "\u262F"  // ☯
-#define ANSI_SNOWFLAKE           "\u2744"  // ❄
+// ANSI miscellaneous symbols
+#define ANSI_CHECKMARK             "\u2713"  // ✓ Checkmark
+#define ANSI_CROSSMARK             "\u2717"  // ✗ Crossmark
+#define ANSI_SMILEY                "\u263A"  // ☺ Smiley face
+#define ANSI_HEART                 "\u2665"  // ♥ Heart
+#define ANSI_DIAMOND               "\u2666"  // ♦ Diamond
+#define ANSI_CLUB                  "\u2663"  // ♣ Club
+#define ANSI_SPADE                 "\u2660"  // ♠ Spade
 
 #endif // CONSTANTS_H
-
-
