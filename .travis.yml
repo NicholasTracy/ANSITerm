@@ -17,29 +17,23 @@ before_install:
 install:
   - pip3 install pyserial
 
-before_script:
-  # Start virtual display
-  - export DISPLAY=:99.0
-  - sh -e /etc/init.d/xvfb start
-  - sleep 3  # Give xvfb some time to start
-
 script:
   # Add your Arduino setup commands here
   - export ARDUINO_DIR=/usr/share/arduino
   - export PATH=$ARDUINO_DIR:$PATH
   - export BOARDS="arduino:avr:uno arduino:avr:mega arduino:samd:mkr1000" # List your boards here
 
-  # Compile the library for each board
+  # Compile the library for each board using xvfb-run
   - |
     for BOARD in $BOARDS; do
       echo "Compiling for $BOARD"
-      arduino --verify --board $BOARD --pref build.path=build-$BOARD examples/BasicExample/BasicExample.ino
+      xvfb-run arduino --verify --board $BOARD --pref build.path=build-$BOARD examples/BasicExample/BasicExample.ino
     done
 
-  # Run tests by uploading the sketch and checking the serial output
+  # Run tests by uploading the sketch and checking the serial output using xvfb-run
   - |
     for BOARD in $BOARDS; do
       echo "Running tests on $BOARD"
-      arduino --upload --board $BOARD --pref build.path=build-$BOARD examples/BasicExample/BasicExample.ino
+      xvfb-run arduino --upload --board $BOARD --pref build.path=build-$BOARD examples/BasicExample/BasicExample.ino
       python3 validate_serial_output.py /dev/ttyUSB0
     done
