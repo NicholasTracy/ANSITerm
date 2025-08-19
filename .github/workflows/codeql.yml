@@ -1,28 +1,62 @@
 name: CodeQL
 
 on:
-  push:
-    branches: [ master, main ]
   pull_request:
+    branches: [ master, main ]
+  push:
     branches: [ master, main ]
   schedule:
     - cron: '12 6 * * 0'
 
 jobs:
   analyze:
-    name: Analyze (C/C++)
+    name: CodeQL (C/C++ via Arduino CLI)
     runs-on: ubuntu-latest
     permissions:
       actions: read
       contents: read
       security-events: write
-    strategy:
-      fail-fast: false
-      matrix:
-        language: [ 'cpp' ]
+    env:
+      CODEQL_EXTRACTOR_CPP_TRACING: "on"
     steps:
       - uses: actions/checkout@v4
-      - uses: github/codeql-action/init@v3
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
         with:
-          languages: ${{ matrix.language }}
-      - uses: github/codeql-action/analyze@v3
+          languages: cpp
+          build-mode: manual
+
+      - name: Set up Arduino CLI
+        uses: arduino/setup-arduino-cli@v2
+        with:
+          version: "1.x"
+
+      - name: Install AVR core
+        run: |
+          arduino-cli core update-index
+          arduino-cli core install arduino:avr
+
+      - name: List example sketches
+        id: ex
+        shell: bash
+        run: |
+          EXS=$(find examples -type f -name '*.ino' | sort || true)
+          echo "examples<<EOF" >> $GITHUB_OUTPUT
+          echo "${EXS}" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+          echo "Found sketches:"
+          echo "${EXS}"
+
+      - name: Compile examples (arduino:avr:uno)
+        if: ${{ steps.ex.outputs.examples != '' }}
+        shell: bash
+        run: |
+          set -e
+          while IFS= read -r SKETCH; do
+            echo "==> Building $SKETCH"
+            arduino-cli compile --fqbn arduino:avr:uno "$SKETCH"
+          done <<< "${{ steps.ex.outputs.examples }}"
+
+      - name: Analyze with CodeQL
+        uses: github/codeql-action/analyze@v3
