@@ -1,0 +1,42 @@
+name: Arduino CI
+
+on:
+  push:
+    branches: [ master, main ]
+    tags: [ 'v*' ]
+  pull_request:
+    branches: [ master, main ]
+
+jobs:
+  lint:
+    name: Arduino Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Lint (strict, Library Manager submit)
+        uses: arduino/arduino-lint-action@v2
+        with:
+          compliance: strict
+          library-manager: submit
+          recursive: true
+
+  build:
+    name: Compile Examples (${{ matrix.fqbn }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        fqbn:
+          - arduino:avr:uno
+          - arduino:avr:leonardo
+          - arduino:avr:mega
+    steps:
+      - uses: actions/checkout@v4
+      - name: Compile all examples
+        uses: arduino/compile-sketches@v1
+        with:
+          fqbn: ${{ matrix.fqbn }}
+          # Automatically discovers sketches in `examples/`
+          sketch-paths: |
+            - examples
+          verbose: false
