@@ -32,16 +32,21 @@ jobs:
         with:
           version: "1.x"
 
-      - name: Install AVR core
+      - name: Install Arduino cores and libraries
         run: |
           arduino-cli core update-index
           arduino-cli core install arduino:avr
+          arduino-cli core install arduino:megaavr
+          arduino-cli lib install Ethernet
+          arduino-cli lib install WiFiNINA
+          arduino-cli core update-index --additional-urls https://espressif.github.io/arduino-esp32/package_esp32_index.json
+          arduino-cli core install esp32:esp32 --additional-urls https://espressif.github.io/arduino-esp32/package_esp32_index.json
 
       - name: List example sketches
         id: ex
         shell: bash
         run: |
-          EXS=$(find examples -type f -name '*.ino' | sort || true)
+          EXS=$(find examples -type f -name '*.ino' ! -path '*/SSHExample/*' | sort || true)
           echo "examples<<EOF" >> $GITHUB_OUTPUT
           echo "${EXS}" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
@@ -57,6 +62,26 @@ jobs:
             echo "==> Building $SKETCH"
             arduino-cli compile --fqbn arduino:avr:uno "$SKETCH"
           done <<< "${{ steps.ex.outputs.examples }}"
+
+      - name: Compile SSH example (UNO WiFi Rev2 + WiFiNINA)
+        run: |
+          arduino-cli compile \
+            --fqbn arduino:megaavr:uno2018 \
+            --build-property compiler.cpp.extra_flags="-DANSITERM_SSH_USE_WIFI_NINA" \
+            examples/SSHExample/SSHExample.ino
+
+      - name: Compile SSH example (Mega + Ethernet)
+        run: |
+          arduino-cli compile \
+            --fqbn arduino:avr:mega \
+            --build-property compiler.cpp.extra_flags="-DANSITERM_SSH_USE_ETHERNET" \
+            examples/SSHExample/SSHExample.ino
+
+      - name: Compile SSH example (ESP32)
+        run: |
+          arduino-cli compile \
+            --fqbn esp32:esp32:esp32 \
+            examples/SSHExample/SSHExample.ino
 
       - name: Analyze with CodeQL
         uses: github/codeql-action/analyze@v3

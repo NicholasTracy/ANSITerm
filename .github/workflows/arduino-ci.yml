@@ -20,8 +20,8 @@ jobs:
           library-manager: submit
           recursive: true
 
-  build:
-    name: Compile Examples (${{ matrix.fqbn }})
+  build_avr:
+    name: Compile AVR examples (${{ matrix.fqbn }})
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -32,11 +32,80 @@ jobs:
           - arduino:avr:mega
     steps:
       - uses: actions/checkout@v4
-      - name: Compile all examples
-        uses: arduino/compile-sketches@v1
+      - name: Set up Arduino CLI
+        uses: arduino/setup-arduino-cli@v2
         with:
-          fqbn: ${{ matrix.fqbn }}
-          # Automatically discovers sketches in `examples/`
-          sketch-paths: |
-            - examples
-          verbose: false
+          version: "1.x"
+      - name: Install AVR core
+        run: |
+          arduino-cli core update-index
+          arduino-cli core install arduino:avr
+      - name: Compile AVR-compatible examples
+        shell: bash
+        run: |
+          set -euo pipefail
+          while IFS= read -r SKETCH; do
+            echo "==> Building ${SKETCH} for ${{ matrix.fqbn }}"
+            arduino-cli compile --fqbn "${{ matrix.fqbn }}" "${SKETCH}"
+          done < <(find examples -type f -name '*.ino' ! -path '*/SSHExample/*' | sort)
+
+  build_ssh_megaavr_wifi:
+    name: Compile SSH example (UNO WiFi Rev2 + WiFiNINA)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Arduino CLI
+        uses: arduino/setup-arduino-cli@v2
+        with:
+          version: "1.x"
+      - name: Install MegaAVR core and WiFiNINA library
+        run: |
+          arduino-cli core update-index
+          arduino-cli core install arduino:megaavr
+          arduino-cli lib install WiFiNINA
+      - name: Compile SSH example for UNO WiFi Rev2
+        run: |
+          arduino-cli compile \
+            --fqbn arduino:megaavr:uno2018 \
+            --build-property compiler.cpp.extra_flags="-DANSITERM_SSH_USE_WIFI_NINA" \
+            examples/SSHExample/SSHExample.ino
+
+  build_ssh_avr_ethernet:
+    name: Compile SSH example (Mega + Ethernet)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Arduino CLI
+        uses: arduino/setup-arduino-cli@v2
+        with:
+          version: "1.x"
+      - name: Install AVR core and Ethernet library
+        run: |
+          arduino-cli core update-index
+          arduino-cli core install arduino:avr
+          arduino-cli lib install Ethernet
+      - name: Compile SSH example for Mega with Ethernet
+        run: |
+          arduino-cli compile \
+            --fqbn arduino:avr:mega \
+            --build-property compiler.cpp.extra_flags="-DANSITERM_SSH_USE_ETHERNET" \
+            examples/SSHExample/SSHExample.ino
+
+  build_ssh_esp32:
+    name: Compile SSH example (ESP32)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Arduino CLI
+        uses: arduino/setup-arduino-cli@v2
+        with:
+          version: "1.x"
+      - name: Install ESP32 core
+        run: |
+          arduino-cli core update-index --additional-urls https://espressif.github.io/arduino-esp32/package_esp32_index.json
+          arduino-cli core install esp32:esp32 --additional-urls https://espressif.github.io/arduino-esp32/package_esp32_index.json
+      - name: Compile SSH example for ESP32
+        run: |
+          arduino-cli compile \
+            --fqbn esp32:esp32:esp32 \
+            examples/SSHExample/SSHExample.ino

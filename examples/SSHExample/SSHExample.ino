@@ -24,41 +24,88 @@
  */
 
 #include <ANSITerm.h>
-#include <WiFi.h>         // Include WiFi library for network status (use <ESP8266WiFi.h> for ESP8266)
-#include <WiFiClient.h>
 
-// Your network credentials
+#if defined(ARDUINO_ARCH_ESP32)
+  #include <WiFi.h>
+  #define ANSITERM_SSH_TRANSPORT_NAME "WiFi (ESP32)"
+  using NetworkServer = WiFiServer;
+  using NetworkClient = WiFiClient;
+#elif defined(ARDUINO_ARCH_ESP8266)
+  #include <ESP8266WiFi.h>
+  #define ANSITERM_SSH_TRANSPORT_NAME "WiFi (ESP8266)"
+  using NetworkServer = WiFiServer;
+  using NetworkClient = WiFiClient;
+#elif defined(ANSITERM_SSH_USE_ETHERNET)
+  #include <SPI.h>
+  #include <Ethernet.h>
+  #define ANSITERM_SSH_TRANSPORT_NAME "Ethernet"
+  using NetworkServer = EthernetServer;
+  using NetworkClient = EthernetClient;
+#elif defined(ANSITERM_SSH_USE_WIFI_NINA)
+  #include <SPI.h>
+  #include <WiFiNINA.h>
+  #define ANSITERM_SSH_TRANSPORT_NAME "WiFiNINA"
+  using NetworkServer = WiFiServer;
+  using NetworkClient = WiFiClient;
+#elif defined(ARDUINO_ARCH_AVR) && __has_include(<Ethernet.h>)
+  #include <SPI.h>
+  #include <Ethernet.h>
+  #define ANSITERM_SSH_TRANSPORT_NAME "Ethernet"
+  using NetworkServer = EthernetServer;
+  using NetworkClient = EthernetClient;
+#elif __has_include(<WiFiNINA.h>)
+  #include <SPI.h>
+  #include <WiFiNINA.h>
+  #define ANSITERM_SSH_TRANSPORT_NAME "WiFiNINA"
+  using NetworkServer = WiFiServer;
+  using NetworkClient = WiFiClient;
+#elif __has_include(<Ethernet.h>)
+  #include <SPI.h>
+  #include <Ethernet.h>
+  #define ANSITERM_SSH_TRANSPORT_NAME "Ethernet"
+  using NetworkServer = EthernetServer;
+  using NetworkClient = EthernetClient;
+#else
+  #error "SSHExample requires ESP WiFi, WiFiNINA, or Ethernet support."
+#endif
+
+// Your network credentials for WiFi-based transports
 const char* ssid = "your_SSID";
 const char* password = "your_PASSWORD";
 
-// Server settings
-WiFiServer server(23);    // Create a TCP server on port 23 (Telnet port)
-WiFiClient client;        // Create a client object
+// Default MAC and fallback static network configuration for Ethernet transports
+byte mac[] = { 0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED };
+IPAddress fallbackIp(192, 168, 1, 177);
+IPAddress fallbackDns(192, 168, 1, 1);
+IPAddress fallbackGateway(192, 168, 1, 1);
+IPAddress fallbackSubnet(255, 255, 255, 0);
 
-// Initialize ANSITerm with a WiFiClient stream
+NetworkServer server(23);
+NetworkClient client;
 ANSITerm terminal(client);
+
+bool connectNetwork();
+IPAddress getLocalIP();
+IPAddress getSubnetMask();
+IPAddress getGatewayIP();
+IPAddress getDnsIP();
 
 void setup() {
     // Start serial communication (for debugging purposes)
     Serial.begin(9600);
     delay(100);
 
-    // Connect to WiFi
-    Serial.println("Connecting to WiFi...");
-    WiFi.begin(ssid, password);
-
-    while (WiFi.status() != WL_CONNECTED) {
-        delay(500);
-        Serial.print(".");
+    if (!connectNetwork()) {
+        Serial.println("Network initialization failed.");
+        return;
     }
-    Serial.println("Connected!");
 
     // Start the server
     server.begin();
 
     // Print IP address to the serial monitor
     Serial.print("IP Address: ");
-    Serial.println(WiFi.localIP());
+    Serial.println(getLocalIP());
 }
 
 void loop() {
@@ -69,10 +116,10 @@ void loop() {
         terminal.begin(true, true, true, true, "yellow", "black"); // yellow text on black background
 
         // Get IP address and other network information
-        IPAddress ip = WiFi.localIP();
-        IPAddress subnet = WiFi.subnetMask();
-        IPAddress gateway = WiFi.gatewayIP();
-        IPAddress dns = WiFi.dnsIP();
+        IPAddress ip = getLocalIP();
+        IPAddress subnet = getSubnetMask();
+        IPAddress gateway = getGatewayIP();
+        IPAddress dns = getDnsIP();
 
         // Display network information
         terminal.setTextColor("yellow"); // Set text color to yellow
@@ -102,4 +149,62 @@ void loop() {
         // Close the connection when the client disconnects
         client.stop();
     }
+}
+
+bool connectNetwork() {
+    Serial.print("Initializing ");
+    Serial.println(ANSITERM_SSH_TRANSPORT_NAME);
+
+#if defined(ARDUINO_ARCH_ESP32) || defined(ARDUINO_ARCH_ESP8266) || defined(ANSITERM_SSH_USE_WIFI_NINA) || (!defined(ARDUINO_ARCH_AVR) && __has_include(<WiFiNINA.h>))
+    WiFi.begin(ssid, password);
+
+    while (WiFi.status() != WL_CONNECTED) {
+        delay(500);
+        Serial.print(".");
+    }
+
+    Serial.println();
+    Serial.println("Connected!");
+    return true;
+#else
+    if (Ethernet.begin(mac) == 0) {
+        Serial.println("DHCP failed, using fallback static IP.");
+        Ethernet.begin(mac, fallbackIp, fallbackDns, fallbackGateway, fallbackSubnet);
+    }
+
+    delay(1000);
+    return Ethernet.hardwareStatus() != EthernetNoHardware;
+#endif
+}
+
+IPAddress getLocalIP() {
+#if defined(ARDUINO_ARCH_ESP32) || defined(ARDUINO_ARCH_ESP8266) || defined(ANSITERM_SSH_USE_WIFI_NINA) || (!defined(ARDUINO_ARCH_AVR) && __has_include(<WiFiNINA.h>))
+    return WiFi.localIP();
+#else
+    return Ethernet.localIP();
+#endif
+}
+
+IPAddress getSubnetMask() {
+#if defined(ARDUINO_ARCH_ESP32) || defined(ARDUINO_ARCH_ESP8266) || defined(ANSITERM_SSH_USE_WIFI_NINA) || (!defined(ARDUINO_ARCH_AVR) && __has_include(<WiFiNINA.h>))
+    return WiFi.subnetMask();
+#else
+    return Ethernet.subnetMask();
+#endif
+}
+
+IPAddress getGatewayIP() {
+#if defined(ARDUINO_ARCH_ESP32) || defined(ARDUINO_ARCH_ESP8266) || defined(ANSITERM_SSH_USE_WIFI_NINA) || (!defined(ARDUINO_ARCH_AVR) && __has_include(<WiFiNINA.h>))
+    return WiFi.gatewayIP();
+#else
+    return Ethernet.gatewayIP();
+#endif
+}
+
+IPAddress getDnsIP() {
+#if defined(ARDUINO_ARCH_ESP32) || defined(ARDUINO_ARCH_ESP8266) || defined(ANSITERM_SSH_USE_WIFI_NINA) || (!defined(ARDUINO_ARCH_AVR) && __has_include(<WiFiNINA.h>))
+    return WiFi.dnsIP();
+#else
+    return Ethernet.dnsServerIP();
+#endif
 }
