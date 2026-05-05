@@ -26,6 +26,22 @@
 #include "constants.h"
 #include "web_colors.h"
 
+// One logical input event from the terminal (keyboard arrows, Enter, or SGR mouse).
+struct ANSITermInput {
+    enum Kind : uint8_t {
+        None,
+        Enter,
+        ArrowUp,
+        ArrowDown,
+        ArrowLeft,
+        ArrowRight,
+        MousePress
+    };
+    Kind kind = None;
+    uint8_t mouseRow = 0;
+    uint8_t mouseCol = 0;
+};
+
 class ANSITerm {
 public:
     // Constructor: Initializes the ANSITerm object with a specified Stream (e.g., Serial)
@@ -96,6 +112,9 @@ public:
     
     // Parses the mouse report to determine the row and column where a click occurred
     void parseMouseReport(uint8_t& row, uint8_t& col);
+
+    // Reads the next Enter, CSI arrow key, or SGR mouse press from the stream (non-blocking aside from short ESC waits).
+    bool pollInput(ANSITermInput& out);
 
     // Makes the cursor visible
     void showCursor();
