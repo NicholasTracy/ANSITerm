@@ -56,6 +56,21 @@ void drawButtons(uint8_t sel) {
     terminal.setBackgroundColor("black");
 }
 
+void paintFullUi() {
+    terminal.begin(true, true, true, true, "white", "black");
+
+    terminal.setTextColor("cyan");
+    terminal.writeTextAt(2, 5, "Button interaction example");
+
+    selection = 0;
+    drawButtons(selection);
+
+    terminal.setTextColor("white");
+    terminal.writeTextAt(13, 5, "Keyboard: Arrow keys = move highlight   Enter = activate");
+    terminal.writeTextAt(14, 5, "Mouse: click works only if the terminal sends SGR mouse reports.");
+    terminal.writeTextAt(15, 5, "(PuTTY over USB Serial usually does not — use arrows + Enter.)");
+}
+
 bool hitToggle(uint8_t row, uint8_t col) {
     return row >= kToggleRow0 && row <= kToggleRow1 && col >= kToggleCol0 && col <= kToggleCol1;
 }
@@ -76,23 +91,18 @@ void setup() {
         ;
     }
 
-    terminal.begin(true, true, true, true, "white", "black");
-
     pinMode(LED_BUILTIN, OUTPUT);
     digitalWrite(LED_BUILTIN, ledState);
 
-    terminal.setTextColor("cyan");
-    terminal.writeTextAt(2, 5, "Button interaction example");
-
-    selection = 0;
-    drawButtons(selection);
-
-    terminal.setTextColor("white");
-    terminal.writeTextAt(13, 5, "Keyboard: Arrow keys = move highlight   Enter = activate");
-    terminal.writeTextAt(14, 5, "Mouse: click works only if the terminal sends SGR mouse reports.");
-    terminal.writeTextAt(15, 5, "(PuTTY over USB Serial usually does not — use arrows + Enter.)");
+    paintFullUi();
 
     while (true) {
+        if (terminal.pollHostTerminalReconnect()) {
+            digitalWrite(LED_BUILTIN, ledState);
+            paintFullUi();
+            continue;
+        }
+
         ANSITermInput ev;
         while (terminal.pollInput(ev)) {
             switch (ev.kind) {

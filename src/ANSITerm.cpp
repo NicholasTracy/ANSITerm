@@ -21,6 +21,10 @@
 
 #include "ANSITerm.h"
 
+#if defined(USBCON)
+#include <USBAPI.h>
+#endif
+
 namespace {
 
 bool readDecimal(Stream& s, uint16_t& out) {
@@ -141,6 +145,30 @@ void ANSITerm::begin(bool clear, bool resetCursor, bool enableMouse, bool showCu
 
     // Set default background color
     setBackgroundColor(defaultBackgroundColor);
+
+    syncHostSessionState();
+}
+
+void ANSITerm::syncHostSessionState() {
+#if defined(USBCON)
+    _hostUsbConfigured = USBDevice.configured();
+#else
+    _hostUsbConfigured = true;
+#endif
+}
+
+bool ANSITerm::pollHostTerminalReconnect() {
+    if (static_cast<void*>(&_stream) != static_cast<void*>(&Serial)) {
+        return false;
+    }
+#if defined(USBCON)
+    bool now = USBDevice.configured();
+    bool reopened = now && !_hostUsbConfigured;
+    _hostUsbConfigured = now;
+    return reopened;
+#else
+    return false;
+#endif
 }
 
 // Clears the terminal screen

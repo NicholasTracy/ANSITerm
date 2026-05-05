@@ -16,14 +16,7 @@
 
 ANSITerm terminal(Serial);
 
-void setup() {
-    Serial.begin(9600);
-    while (!Serial) {
-        ; // Required on native-USB boards (Leonardo, SAMD, etc.)
-    }
-
-    // begin(clear, resetCursor, enableMouse, showCursor, textColor, backgroundColor)
-    // Other presets are commented in-repo — try color numbers ("32") or hex ("#RRGGBB").
+void drawMainScreen() {
     terminal.begin(true, true, true, true, "cyan", "black");
 
     terminal.setTextColor("yellow");
@@ -37,8 +30,21 @@ void setup() {
 
     terminal.setTextColor("cyan");
     terminal.drawButton(10, 20, 12, 50, "Click Me!");
+}
+
+void setup() {
+    Serial.begin(9600);
+    while (!Serial) {
+        ; // Required on native-USB boards (Leonardo, SAMD, etc.)
+    }
+
+    drawMainScreen();
 
     while (true) {
+        if (terminal.pollHostTerminalReconnect()) {
+            drawMainScreen();
+            continue;
+        }
         if (terminal.detectClick(10, 20, 12, 50)) {
             terminal.clearScreen();
             terminal.writeTextAt(6, 10, "Button clicked!");

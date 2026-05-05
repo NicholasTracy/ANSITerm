@@ -19,8 +19,8 @@ ANSITerm terminal(Serial);
 
 const int chipSelect = 4;
 
-void displayFileTree();
 void displayAnsiFile(const char* filename);
+void displayFileTree();
 
 void setup() {
     Serial.begin(9600);
@@ -44,6 +44,7 @@ void loop() {
 }
 
 void displayFileTree() {
+tree_top:
     terminal.clearScreen();
     terminal.setTextColor("cyan");
     terminal.writeTextAt(2, 2, "SD card — .ans files (click a name):");
@@ -52,6 +53,11 @@ void displayFileTree() {
     int row = 4;
 
     while (true) {
+        if (terminal.pollHostTerminalReconnect()) {
+            root.close();
+            goto tree_top;
+        }
+
         File entry = root.openNextFile();
         if (!entry) {
             break;
@@ -63,9 +69,16 @@ void displayFileTree() {
                 terminal.setTextColor("yellow");
                 terminal.writeTextAt(row, 4, fileName.c_str());
 
+                if (terminal.pollHostTerminalReconnect()) {
+                    entry.close();
+                    root.close();
+                    goto tree_top;
+                }
                 if (terminal.detectClick(row, 4, row, 4 + fileName.length())) {
+                    entry.close();
+                    root.close();
                     displayAnsiFile(fileName.c_str());
-                    return;
+                    goto tree_top;
                 }
                 row++;
             }
@@ -74,6 +87,13 @@ void displayFileTree() {
     }
 
     root.close();
+
+    while (true) {
+        if (terminal.pollHostTerminalReconnect()) {
+            goto tree_top;
+        }
+        delay(50);
+    }
 }
 
 void displayAnsiFile(const char* filename) {
@@ -102,9 +122,11 @@ void displayAnsiFile(const char* filename) {
     terminal.drawButton(22, 10, 24, 50, "Exit");
 
     while (true) {
+        if (terminal.pollHostTerminalReconnect()) {
+            return;
+        }
         if (terminal.detectClick(22, 10, 24, 50)) {
-            displayFileTree();
-            break;
+            return;
         }
     }
 }

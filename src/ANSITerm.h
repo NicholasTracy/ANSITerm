@@ -116,6 +116,10 @@ public:
     // Reads the next Enter, CSI arrow key, or SGR mouse press from the stream (non-blocking aside from short ESC waits).
     bool pollInput(ANSITermInput& out);
 
+    // Best-effort: true once when the USB CDC host re-enumerates after disconnect (native-USB Arduino cores with USBCON).
+    // UART-only boards usually reset on serial-open (DTR); Network streams are always false. Call from loop while idle.
+    bool pollHostTerminalReconnect();
+
     // Makes the cursor visible
     void showCursor();
     
@@ -123,8 +127,13 @@ public:
     void hideCursor();
 
 private:
+    void syncHostSessionState();
+
     // Stream object for communication
     Stream &_stream;
+
+    // Tracks USB CDC host configuration for pollHostTerminalReconnect() (USBCON builds only).
+    bool _hostUsbConfigured = false;
 
     // Converts RGB values to an ANSI color code
     uint8_t rgbToAnsi(uint8_t r, uint8_t g, uint8_t b);

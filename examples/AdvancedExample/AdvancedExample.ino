@@ -6,6 +6,7 @@
  * drawTable(), and symbols from constants.h — plus detectClick() on a framed “button”.
  *
  * Hardware: USB serial. Terminal must support UTF-8 and (for clicks) SGR mouse mode.
+ * Closing/reopening the USB serial session redraws the demo on native-USB boards when supported.
  *
  * License: LGPL-3.0 — see LICENSE.txt in the library root.
  */
@@ -66,6 +67,9 @@ void runAdvancedDemo() {
         terminal.writeTextAt(19, 68, ANSI_ARROW_DOWN " Row 3, Col 4");
 
         while (true) {
+            if (terminal.pollHostTerminalReconnect()) {
+                break;
+            }
             if (terminal.detectClick(10, 20, 12, 50)) {
                 terminal.clearScreen();
                 break;
