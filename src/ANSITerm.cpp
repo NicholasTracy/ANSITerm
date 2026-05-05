@@ -48,6 +48,26 @@ bool expectChar(Stream& s, char ch) {
     return s.read() == ch;
 }
 
+bool isInternalHorizontalRow(uint8_t row, uint8_t startRow, uint8_t rows, uint8_t rowHeight) {
+    for (uint8_t i = 1; i < rows; i++) {
+        uint8_t hr = static_cast<uint8_t>(startRow + i * rowHeight);
+        if (row == hr) {
+            return true;
+        }
+    }
+    return false;
+}
+
+bool isInternalVerticalCol(uint8_t col, uint8_t startCol, uint8_t cols, uint8_t colWidth) {
+    for (uint8_t j = 1; j < cols; j++) {
+        uint8_t vc = static_cast<uint8_t>(startCol + j * colWidth);
+        if (col == vc) {
+            return true;
+        }
+    }
+    return false;
+}
+
 } // namespace
 
 // Constructor: Initializes the ANSITerm object with a specified Stream (e.g., Serial)
@@ -185,35 +205,65 @@ void ANSITerm::drawDoubleBox(uint8_t startRow, uint8_t startCol, uint8_t endRow,
     _stream.print(ANSI_BOX_DOUBLE_BOTTOM_RIGHT);
 }
 
-// Draws a table with the specified number of rows and columns using single-line box-drawing characters
+// Draws a single-line grid inside (startRow,startCol)-(endRow,endCol).
+// rows/cols are cell counts; interior space is split evenly (integer division).
 void ANSITerm::drawTable(uint8_t startRow, uint8_t startCol, uint8_t endRow, uint8_t endCol, uint8_t rows, uint8_t cols) {
-    // Draw the outer box
     drawBox(startRow, startCol, endRow, endCol);
 
-    // Calculate row and column heights
-    uint8_t rowHeight = (endRow - startRow) / rows;
-    uint8_t colWidth = (endCol - startCol) / cols;
+    if (rows < 1 || cols < 1 || endRow <= startRow || endCol <= startCol) {
+        return;
+    }
 
-    // Draw the internal lines
+    uint8_t rowSpan = static_cast<uint8_t>(endRow - startRow);
+    uint8_t colSpan = static_cast<uint8_t>(endCol - startCol);
+    uint8_t rowHeight = rowSpan / rows;
+    uint8_t colWidth = colSpan / cols;
+
+    if (rowHeight < 1 || colWidth < 1) {
+        return;
+    }
+
+    // Top/bottom borders: replace horizontal segments with tees where vertical dividers meet the frame
+    for (uint8_t j = 1; j < cols; j++) {
+        uint8_t vc = static_cast<uint8_t>(startCol + j * colWidth);
+        setCursorPosition(startRow, vc);
+        _stream.print(ANSI_BOX_T_INTERSECT);
+        setCursorPosition(endRow, vc);
+        _stream.print(ANSI_BOX_B_INTERSECT);
+    }
+
+    // Left/right borders: tees where horizontal dividers meet the frame
     for (uint8_t i = 1; i < rows; i++) {
-        uint8_t currentRow = startRow + i * rowHeight;
-        setCursorPosition(currentRow, startCol);
+        uint8_t hr = static_cast<uint8_t>(startRow + i * rowHeight);
+        setCursorPosition(hr, startCol);
         _stream.print(ANSI_BOX_L_INTERSECT);
-        for (uint8_t j = 1; j < cols; j++) {
-            uint8_t currentCol = startCol + j * colWidth;
-            setCursorPosition(currentRow, currentCol);
-            _stream.print(ANSI_BOX_CROSS);
-        }
-        setCursorPosition(currentRow, endCol);
+        setCursorPosition(hr, endCol);
         _stream.print(ANSI_BOX_R_INTERSECT);
     }
 
+    // Full horizontal rules on each interior grid row (crossings filled where verticals meet)
+    for (uint8_t i = 1; i < rows; i++) {
+        uint8_t hr = static_cast<uint8_t>(startRow + i * rowHeight);
+        for (uint8_t col = static_cast<uint8_t>(startCol + 1); col < endCol; col++) {
+            setCursorPosition(hr, col);
+            if (isInternalVerticalCol(col, startCol, cols, colWidth)) {
+                _stream.print(ANSI_BOX_CROSS);
+            } else {
+                _stream.print(ANSI_BOX_HORIZONTAL);
+            }
+        }
+    }
+
+    // Vertical segments on interior columns (skip rows already drawn as part of horizontal rules)
     for (uint8_t j = 1; j < cols; j++) {
-        uint8_t currentCol = startCol + j * colWidth;
-        setCursorPosition(startRow, currentCol);
-        _stream.print(ANSI_BOX_T_INTERSECT);
-        setCursorPosition(endRow, currentCol);
-        _stream.print(ANSI_BOX_B_INTERSECT);
+        uint8_t vc = static_cast<uint8_t>(startCol + j * colWidth);
+        for (uint8_t row = static_cast<uint8_t>(startRow + 1); row < endRow; row++) {
+            if (isInternalHorizontalRow(row, startRow, rows, rowHeight)) {
+                continue;
+            }
+            setCursorPosition(row, vc);
+            _stream.print(ANSI_BOX_VERTICAL);
+        }
     }
 }
 

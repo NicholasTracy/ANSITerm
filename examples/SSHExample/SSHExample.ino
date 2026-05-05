@@ -1,26 +1,14 @@
 /*
- * ANSITerm Library - Arduino ANSI Terminal Control Library
+ * ANSITerm — SSHExample (network stream)
  * https://github.com/NicholasTracy/ANSITerm
- * 
- * Author: Nicholas Tracy (2024)
- * https://github.com/NicholasTracy
  *
- * File: SSHExample.ino
- * 
- * Description:
- * This example demonstrates using the ANSITerm library over a network connection. 
- * It sets up a basic terminal interface that displays the network status, including 
- * the IP address and other relevant information. This example assumes the use of 
- * a WiFi-capable board such as the ESP8266 or ESP32, and a TCP server for SSH-like interaction.
- * 
- * License:
- * This library is licensed under the GNU General Public License v3 (GPLv3).
- * You are free to use, modify, and distribute this library, provided that you comply with 
- * the terms of the GPLv3. There are no warranties, expressed or implied, provided with 
- * this software.
- * 
- * For more details, see the full license at: https://www.gnu.org/licenses/gpl-3.0.en.html
- * 
+ * What you learn: Constructing ANSITerm on a TCP client instead of Serial, and printing
+ * the same ANSI UI once a client connects (telnet-style).
+ *
+ * Hardware: ESP8266/ESP32 Wi-Fi, WiFiNINA, or Ethernet — see CI defines ANSITERM_SSH_USE_*.
+ * Client: `telnet <ip> 23` or similar raw TCP terminal (this sketch is not full SSH crypto).
+ *
+ * License: LGPL-3.0 — see LICENSE.txt in the library root.
  */
 
 #include <ANSITerm.h>
@@ -69,18 +57,18 @@
   #error "SSHExample requires ESP WiFi, WiFiNINA, or Ethernet support."
 #endif
 
-// Your network credentials for WiFi-based transports
+// Wi-Fi only — ignored when building for Ethernet.
 const char* ssid = "your_SSID";
 const char* password = "your_PASSWORD";
 
-// Default MAC and fallback static network configuration for Ethernet transports
+// Ethernet: hardware MAC and optional static fallback if DHCP fails
 byte mac[] = { 0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED };
 IPAddress fallbackIp(192, 168, 1, 177);
 IPAddress fallbackDns(192, 168, 1, 1);
 IPAddress fallbackGateway(192, 168, 1, 1);
 IPAddress fallbackSubnet(255, 255, 255, 0);
 
-NetworkServer server(23);
+NetworkServer server(23); // Raw TCP port (telnet convention — not encrypted SSH)
 NetworkClient client;
 ANSITerm terminal(client);
 

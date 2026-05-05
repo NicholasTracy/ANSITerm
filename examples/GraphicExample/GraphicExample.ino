@@ -1,36 +1,23 @@
 /*
- * ANSITerm Library - Arduino ANSI Terminal Control Library
+ * ANSITerm — GraphicExample
  * https://github.com/NicholasTracy/ANSITerm
- * 
- * Author: Nicholas Tracy (2024)
- * https://github.com/NicholasTracy
  *
- * File: GraphicsExample.ino
- * 
- * Description:
- * This example simulates a simple top-down view game similar to classic Zelda or Pokemon games.
- * The player can move in all directions and shoot projectiles. Enemies also move in all directions
- * and attempt to attack the player. The game features rooms with walls, enemies, and basic collision detection.
- * 
- * License:
- * This library is licensed under the GNU General Public License v3 (GPLv3).
- * You are free to use, modify, and distribute this library, provided that you comply with 
- * the terms of the GPLv3. There are no warranties, expressed or implied, provided with 
- * this software.
- * 
- * For more details, see the full license at: https://www.gnu.org/licenses/gpl-3.0.en.html
- * 
+ * What you learn: Simple animation loop — clearScreen each frame, writeTextAt for sprites,
+ * and keyboard input over Serial (w/a/s/d move, space shoots). Uses UTF-8 symbol macros.
+ *
+ * Hardware: USB serial at 9600 baud; terminal must support UTF-8. No mouse required.
+ *
+ * License: LGPL-3.0 — see LICENSE.txt in the library root.
  */
 
 #include <ANSITerm.h>
 
-// Initialize ANSITerm with the Serial stream
 ANSITerm terminal(Serial);
 
-// Game constants
-const char PLAYER_CHAR = ANSI_SMILEY;
-const char WALL_CHAR = ANSI_BLOCK_HALF;
-const char ENEMY_CHAR = ANSI_SKULL;
+// Symbol macros expand to UTF-8 strings — store as const char*, not char.
+const char* PLAYER_CHAR = ANSI_SMILEY;
+const char* WALL_CHAR = ANSI_BLOCK_HALF;
+const char* ENEMY_CHAR = ANSI_SKULL;
 const char PROJECTILE_CHAR = '*';
 
 const int SCREEN_WIDTH = 40;

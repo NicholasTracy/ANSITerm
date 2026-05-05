@@ -69,7 +69,8 @@ public:
     // Draws a box using double-line box-drawing characters
     void drawDoubleBox(uint8_t startRow, uint8_t startCol, uint8_t endRow, uint8_t endCol);
     
-    // Draws a table with the specified number of rows and columns using single-line box-drawing characters
+    // Grid of single-line box-drawing cells; rows/cols = number of cells (>=1). Bounding box uses the same
+    // row/column convention as drawBox. Interior spacing uses integer division of (end-start).
     void drawTable(uint8_t startRow, uint8_t startCol, uint8_t endRow, uint8_t endCol, uint8_t rows, uint8_t cols);
     
     // Writes text at the specified row and column
