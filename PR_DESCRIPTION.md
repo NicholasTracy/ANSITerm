@@ -56,7 +56,7 @@ This document matches the workflows under `.github/workflows/` as of the current
 ## Maintainer checklist
 
 - [ ] Confirm `library.properties` maintainer/contact fields match what you want for releases and registry (if submitting to Library Manager later).
-- [ ] Optional: tighten lint back to strict / Library Manager mode after cleaning duplicate nested library trees and removing `.development` if present upstream.
+- [ ] Optional: tighten lint back to strict / Library Manager mode after removing `.development` if it appears (duplicate `ANSITerm/` subtree has been removed from the repo).
 - [ ] CI green on `master` / `main` for both workflows.
 
 ## Related notes

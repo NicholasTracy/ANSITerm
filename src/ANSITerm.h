@@ -16,14 +16,7 @@
  * The original concept for this library is based on the BasicTerm library by Trannie Carter.
  * https://github.com/nottwo/BasicTerm (2011)
  * 
- * License:
- * This library is licensed under the GNU General Public License v3 (GPLv3).
- * You are free to use, modify, and distribute this library, provided that you comply with 
- * the terms of the GPLv3. There are no warranties, expressed or implied, provided with 
- * this software.
- * 
- * For more details, see the full license at: https://www.gnu.org/licenses/gpl-3.0.en.html
- * 
+ * License: LGPL-3.0 — see LICENSE.txt in the library root.
  */
 
 #ifndef ANSITERM_H

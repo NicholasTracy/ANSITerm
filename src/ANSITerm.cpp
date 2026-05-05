@@ -16,17 +16,39 @@
  * The original concept for this library is based on the BasicTerm library by Trannie Carter.
  * https://github.com/nottwo/BasicTerm (2011)
  * 
- * License:
- * This library is licensed under the GNU General Public License v3 (GPLv3).
- * You are free to use, modify, and distribute this library, provided that you comply with 
- * the terms of the GPLv3. There are no warranties, expressed or implied, provided with 
- * this software.
- * 
- * For more details, see the full license at: https://www.gnu.org/licenses/gpl-3.0.en.html
- * 
+ * License: LGPL-3.0 — see LICENSE.txt in the library root.
  */
 
 #include "ANSITerm.h"
+
+namespace {
+
+bool readDecimal(Stream& s, uint16_t& out) {
+    out = 0;
+    bool any = false;
+    while (s.available()) {
+        int p = s.peek();
+        if (p < '0' || p > '9') {
+            break;
+        }
+        s.read();
+        any = true;
+        out = static_cast<uint16_t>(out * 10u + static_cast<unsigned>(p - '0'));
+        if (out > 500) {
+            break;
+        }
+    }
+    return any;
+}
+
+bool expectChar(Stream& s, char ch) {
+    if (!s.available()) {
+        return false;
+    }
+    return s.read() == ch;
+}
+
+} // namespace
 
 // Constructor: Initializes the ANSITerm object with a specified Stream (e.g., Serial)
 ANSITerm::ANSITerm(Stream &stream) : _stream(stream) {}
@@ -63,8 +85,8 @@ void ANSITerm::clearScreen() {
 
 // Sets the cursor position to the specified row and column
 void ANSITerm::setCursorPosition(uint8_t row, uint8_t col) {
-    char command[16];
-    sprintf(command, ANSI_SET_CURSOR_POS, row, col);
+    char command[24];
+    snprintf(command, sizeof(command), ANSI_SET_CURSOR_POS, row, col);
     sendAnsiCommand(command);
 }
 
@@ -75,13 +97,16 @@ void ANSITerm::resetFormatting() {
 
 // Sets the text color using an ANSI color number
 void ANSITerm::setTextColor(uint8_t color) {
-    char command[8];
-    sprintf(command, ANSI_SET_TEXT_COLOR, color);
+    char command[24];
+    snprintf(command, sizeof(command), ANSI_SET_TEXT_COLOR, color);
     sendAnsiCommand(command);
 }
 
 // Sets the text color using a color name or hex value
 void ANSITerm::setTextColor(const char* color) {
+    if (!color) {
+        return;
+    }
     if (isdigit(color[0])) {
         setTextColor(atoi(color)); // ANSI number
     } else if (color[0] == '#') {
@@ -93,13 +118,16 @@ void ANSITerm::setTextColor(const char* color) {
 
 // Sets the background color using an ANSI color number
 void ANSITerm::setBackgroundColor(uint8_t color) {
-    char command[8];
-    sprintf(command, ANSI_SET_BACKGROUND_COLOR, color);
+    char command[24];
+    snprintf(command, sizeof(command), ANSI_SET_BACKGROUND_COLOR, color);
     sendAnsiCommand(command);
 }
 
 // Sets the background color using a color name or hex value
 void ANSITerm::setBackgroundColor(const char* color) {
+    if (!color) {
+        return;
+    }
     if (isdigit(color[0])) {
         setBackgroundColor(atoi(color)); // ANSI number
     } else if (color[0] == '#') {
@@ -191,6 +219,9 @@ void ANSITerm::drawTable(uint8_t startRow, uint8_t startCol, uint8_t endRow, uin
 
 // Writes text at the specified row and column
 void ANSITerm::writeTextAt(uint8_t row, uint8_t col, const char* text) {
+    if (!text) {
+        return;
+    }
     setCursorPosition(row, col);
     _stream.print(text);
 }
@@ -203,6 +234,9 @@ void ANSITerm::deleteAtPosition(uint8_t row, uint8_t col) {
 
 // Draws a button with centered text using single-line box-drawing characters
 void ANSITerm::drawButton(uint8_t startRow, uint8_t startCol, uint8_t endRow, uint8_t endCol, const char* text) {
+    if (!text) {
+        return;
+    }
     drawBox(startRow, startCol, endRow, endCol);
 
     uint8_t textLength = strlen(text);
@@ -215,6 +249,9 @@ void ANSITerm::drawButton(uint8_t startRow, uint8_t startCol, uint8_t endRow, ui
 
 // Draws a button with centered text using double-line box-drawing characters
 void ANSITerm::drawDoubleButton(uint8_t startRow, uint8_t startCol, uint8_t endRow, uint8_t endCol, const char* text) {
+    if (!text) {
+        return;
+    }
     drawDoubleBox(startRow, startCol, endRow, endCol);
 
     uint8_t textLength = strlen(text);
@@ -248,8 +285,50 @@ void ANSITerm::disableMouseReporting() {
 
 // Parses the mouse report to determine the row and column where a click occurred
 void ANSITerm::parseMouseReport(uint8_t& row, uint8_t& col) {
-    // Implementation would depend on how the data is structured from the terminal.
-    // Example parsing would go here if mouse reporting is enabled and the format is known.
+    row = col = 0;
+    // SGR extended mouse (1006): CSI < Pb ; Px ; Py M  or  m — Px/Py are column/row (typically 1-based).
+    const unsigned long startMs = millis();
+    while ((millis() - startMs) <= 40 && _stream.available()) {
+        int lead = _stream.read();
+        if (lead != '\033') {
+            continue;
+        }
+        if (!expectChar(_stream, '[')) {
+            continue;
+        }
+        if (!expectChar(_stream, '<')) {
+            continue;
+        }
+        uint16_t btn = 0;
+        uint16_t px = 0;
+        uint16_t py = 0;
+        if (!readDecimal(_stream, btn)) {
+            continue;
+        }
+        if (!expectChar(_stream, ';')) {
+            continue;
+        }
+        if (!readDecimal(_stream, px)) {
+            continue;
+        }
+        if (!expectChar(_stream, ';')) {
+            continue;
+        }
+        if (!readDecimal(_stream, py)) {
+            continue;
+        }
+        if (!_stream.available()) {
+            continue;
+        }
+        int trail = _stream.read();
+        if (trail != 'M' && trail != 'm') {
+            continue;
+        }
+        (void)btn;
+        col = (px > 255) ? 255 : static_cast<uint8_t>(px);
+        row = (py > 255) ? 255 : static_cast<uint8_t>(py);
+        return;
+    }
 }
 
 // Makes the cursor visible
@@ -264,7 +343,12 @@ void ANSITerm::hideCursor() {
 
 // Converts a hex color code to an ANSI color code
 uint8_t ANSITerm::hexToAnsi(const char* hex) {
-    if (hex[0] == '#') hex++;
+    if (!hex) {
+        return 0;
+    }
+    if (hex[0] == '#') {
+        hex++;
+    }
     long int rgb = strtol(hex, NULL, 16);
     uint8_t r = (rgb >> 16) & 0xFF;
     uint8_t g = (rgb >> 8) & 0xFF;
@@ -274,6 +358,9 @@ uint8_t ANSITerm::hexToAnsi(const char* hex) {
 
 // Converts a color name to an ANSI color code
 uint8_t ANSITerm::colorNameToAnsi(const char* name) {
+    if (!name) {
+        return 0;
+    }
     Color color = getWebColor(name);
     return rgbToAnsi(color.r, color.g, color.b);
 }

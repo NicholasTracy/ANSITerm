@@ -9,12 +9,6 @@ setCursorPosition	KEYWORD2
 resetFormatting	KEYWORD2
 setTextColor	KEYWORD2
 setBackgroundColor	KEYWORD2
-setTextColorHex	KEYWORD2
-setBackgroundColorHex	KEYWORD2
-setTextColorRGB	KEYWORD2
-setBackgroundColorRGB	KEYWORD2
-setTextColorByName	KEYWORD2
-setBackgroundColorByName	KEYWORD2
 drawBox	KEYWORD2
 drawDoubleBox	KEYWORD2
 drawTable	KEYWORD2
@@ -26,3 +20,5 @@ detectClick	KEYWORD2
 enableMouseReporting	KEYWORD2
 disableMouseReporting	KEYWORD2
 parseMouseReport	KEYWORD2
+showCursor	KEYWORD2
+hideCursor	KEYWORD2
