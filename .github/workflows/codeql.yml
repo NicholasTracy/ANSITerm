@@ -54,14 +54,14 @@ jobs:
           echo "Found sketches:"
           echo "${EXS}"
 
-      - name: Compile examples (arduino:avr:uno)
+      - name: Compile examples (arduino:avr:mega)
         if: ${{ steps.ex.outputs.examples != '' }}
         shell: bash
         run: |
           set -e
           while IFS= read -r SKETCH; do
             echo "==> Building $SKETCH"
-            arduino-cli compile --fqbn arduino:avr:uno --library . "$SKETCH"
+            arduino-cli compile --fqbn arduino:avr:mega --library . "$SKETCH"
           done <<< "${{ steps.ex.outputs.examples }}"
 
       - name: Compile SSH example (UNO WiFi Rev2 + WiFiNINA)
