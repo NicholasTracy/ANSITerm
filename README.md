@@ -56,7 +56,7 @@ void setup() {
   while (!Serial) { ; }
   terminal.begin();
   terminal.clearScreen();
-  terminal.setTextColorByName("yellow");
+  terminal.setTextColor("yellow");
   terminal.writeTextAt(2, 10, "Welcome to ANSITerm!");
 }
 void loop() {}

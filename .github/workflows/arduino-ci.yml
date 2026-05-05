@@ -13,11 +13,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Lint (library metadata and layout)
+      - name: Lint (Library Manager / strict)
         uses: arduino/arduino-lint-action@v2
         with:
-          compliance: permissive
-          library-manager: false
+          compliance: strict
+          library-manager: submit
 
   build_avr:
     name: Compile AVR examples (${{ matrix.fqbn }})

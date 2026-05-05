@@ -31,8 +31,8 @@
 *.out
 *.app
 
-# README file
-README.md
+# Arduino IDE “live edit examples” flag — must not ship (blocks Library Manager)
+.development
 
 # Local archive/extracted duplicate library artifacts
 ANSITerm.zip
