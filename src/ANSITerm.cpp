@@ -41,11 +41,23 @@ bool readDecimal(Stream& s, uint16_t& out) {
     return any;
 }
 
-bool expectChar(Stream& s, char ch) {
-    if (!s.available()) {
+bool waitByte(Stream& s, int& out, unsigned long deadlineMs) {
+    while (millis() < deadlineMs) {
+        if (s.available()) {
+            out = s.read();
+            return true;
+        }
+        yield();
+    }
+    return false;
+}
+
+bool expectCharBy(Stream& s, char ch, unsigned long deadlineMs) {
+    int c = 0;
+    if (!waitByte(s, c, deadlineMs)) {
         return false;
     }
-    return s.read() == ch;
+    return c == ch;
 }
 
 bool isInternalHorizontalRow(uint8_t row, uint8_t startRow, uint8_t rows, uint8_t rowHeight) {
@@ -336,49 +348,54 @@ void ANSITerm::disableMouseReporting() {
 // Parses the mouse report to determine the row and column where a click occurred
 void ANSITerm::parseMouseReport(uint8_t& row, uint8_t& col) {
     row = col = 0;
-    // SGR extended mouse (1006): CSI < Pb ; Px ; Py M  or  m — Px/Py are column/row (typically 1-based).
-    const unsigned long startMs = millis();
-    while ((millis() - startMs) <= 40 && _stream.available()) {
-        int lead = _stream.read();
-        if (lead != '\033') {
-            continue;
-        }
-        if (!expectChar(_stream, '[')) {
-            continue;
-        }
-        if (!expectChar(_stream, '<')) {
-            continue;
-        }
-        uint16_t btn = 0;
-        uint16_t px = 0;
-        uint16_t py = 0;
-        if (!readDecimal(_stream, btn)) {
-            continue;
-        }
-        if (!expectChar(_stream, ';')) {
-            continue;
-        }
-        if (!readDecimal(_stream, px)) {
-            continue;
-        }
-        if (!expectChar(_stream, ';')) {
-            continue;
-        }
-        if (!readDecimal(_stream, py)) {
-            continue;
-        }
-        if (!_stream.available()) {
-            continue;
-        }
-        int trail = _stream.read();
-        if (trail != 'M' && trail != 'm') {
-            continue;
-        }
-        (void)btn;
-        col = (px > 255) ? 255 : static_cast<uint8_t>(px);
-        row = (py > 255) ? 255 : static_cast<uint8_t>(py);
+    // SGR extended mouse (1006): CSI < Pb ; Px ; Py M  or  m — Px/Py are column/row (1-based cells).
+    // Waits briefly for each byte so USB-serial packets split across frames still parse.
+    // Do not consume non-ESC bytes — leaves typed characters for the sketch.
+    // Terminals that do not encode clicks as this sequence (e.g. PuTTY raw Serial) never send input here.
+    const unsigned long deadline = millis() + 75;
+    if (!_stream.available()) {
         return;
     }
+    if (_stream.peek() != '\033') {
+        return;
+    }
+    int c = 0;
+    if (!waitByte(_stream, c, deadline) || c != '\033') {
+        return;
+    }
+    if (!expectCharBy(_stream, '[', deadline)) {
+        return;
+    }
+    if (!expectCharBy(_stream, '<', deadline)) {
+        return;
+    }
+    uint16_t btn = 0;
+    uint16_t px = 0;
+    uint16_t py = 0;
+    if (!readDecimal(_stream, btn)) {
+        return;
+    }
+    if (!expectCharBy(_stream, ';', deadline)) {
+        return;
+    }
+    if (!readDecimal(_stream, px)) {
+        return;
+    }
+    if (!expectCharBy(_stream, ';', deadline)) {
+        return;
+    }
+    if (!readDecimal(_stream, py)) {
+        return;
+    }
+    if (!waitByte(_stream, c, deadline)) {
+        return;
+    }
+    if (c != 'M' && c != 'm') {
+        return;
+    }
+    (void)btn;
+    col = (px > 255) ? 255 : static_cast<uint8_t>(px);
+    row = (py > 255) ? 255 : static_cast<uint8_t>(py);
 }
 
 // Makes the cursor visible
