@@ -181,7 +181,7 @@ struct Color {
 #define COLOR_YELLOWGREEN          {154, 205, 50}
 
 // Function implementation to get color by name
-Color getWebColor(const char* name) {
+static inline Color getWebColor(const char* name) {
     if (strcmp(name, "aliceblue") == 0) return COLOR_ALICEBLUE;
     if (strcmp(name, "antiquewhite") == 0) return COLOR_ANTIQUEWHITE;
     if (strcmp(name, "aqua") == 0) return COLOR_AQUA;
