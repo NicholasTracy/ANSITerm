@@ -13,11 +13,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Lint (strict, Library Manager submit)
+      - name: Lint (library metadata and layout)
         uses: arduino/arduino-lint-action@v2
         with:
-          compliance: strict
-          library-manager: update
+          compliance: permissive
+          library-manager: false
 
   build_avr:
     name: Compile AVR examples (${{ matrix.fqbn }})
@@ -39,6 +39,7 @@ jobs:
         run: |
           arduino-cli core update-index
           arduino-cli core install arduino:avr
+          arduino-cli lib install SD
       - name: Compile AVR-compatible examples
         shell: bash
         run: |

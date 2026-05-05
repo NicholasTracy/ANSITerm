@@ -89,6 +89,7 @@ IPAddress getLocalIP();
 IPAddress getSubnetMask();
 IPAddress getGatewayIP();
 IPAddress getDnsIP();
+void ipToText(IPAddress ip, char* out, size_t outSize);
 
 void setup() {
     // Start serial communication (for debugging purposes)
@@ -126,17 +127,26 @@ void loop() {
         terminal.writeTextAt(2, 2, "Network Information:");
 
         terminal.setTextColor("white"); // Set text color to white
+        char ipText[16];
+        char subnetText[16];
+        char gatewayText[16];
+        char dnsText[16];
+        ipToText(ip, ipText, sizeof(ipText));
+        ipToText(subnet, subnetText, sizeof(subnetText));
+        ipToText(gateway, gatewayText, sizeof(gatewayText));
+        ipToText(dns, dnsText, sizeof(dnsText));
+
         terminal.writeTextAt(4, 2, "IP Address: ");
-        terminal.writeTextAt(4, 20, ip.toString().c_str());
+        terminal.writeTextAt(4, 20, ipText);
 
         terminal.writeTextAt(5, 2, "Subnet Mask: ");
-        terminal.writeTextAt(5, 20, subnet.toString().c_str());
+        terminal.writeTextAt(5, 20, subnetText);
 
         terminal.writeTextAt(6, 2, "Gateway: ");
-        terminal.writeTextAt(6, 20, gateway.toString().c_str());
+        terminal.writeTextAt(6, 20, gatewayText);
 
         terminal.writeTextAt(7, 2, "DNS: ");
-        terminal.writeTextAt(7, 20, dns.toString().c_str());
+        terminal.writeTextAt(7, 20, dnsText);
 
         // Display a prompt
         terminal.setTextColor("green"); // Set text color to green
@@ -207,4 +217,8 @@ IPAddress getDnsIP() {
 #else
     return Ethernet.dnsServerIP();
 #endif
+}
+
+void ipToText(IPAddress ip, char* out, size_t outSize) {
+    snprintf(out, outSize, "%u.%u.%u.%u", ip[0], ip[1], ip[2], ip[3]);
 }

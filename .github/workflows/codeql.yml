@@ -37,6 +37,7 @@ jobs:
           arduino-cli core update-index
           arduino-cli core install arduino:avr
           arduino-cli core install arduino:megaavr
+          arduino-cli lib install SD
           arduino-cli lib install Ethernet
           arduino-cli lib install WiFiNINA
           arduino-cli core update-index --additional-urls https://espressif.github.io/arduino-esp32/package_esp32_index.json
