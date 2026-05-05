@@ -60,7 +60,7 @@ jobs:
           set -e
           while IFS= read -r SKETCH; do
             echo "==> Building $SKETCH"
-            arduino-cli compile --fqbn arduino:avr:uno "$SKETCH"
+            arduino-cli compile --fqbn arduino:avr:uno --library . "$SKETCH"
           done <<< "${{ steps.ex.outputs.examples }}"
 
       - name: Compile SSH example (UNO WiFi Rev2 + WiFiNINA)
@@ -68,6 +68,7 @@ jobs:
           arduino-cli compile \
             --fqbn arduino:megaavr:uno2018 \
             --build-property compiler.cpp.extra_flags="-DANSITERM_SSH_USE_WIFI_NINA" \
+            --library . \
             examples/SSHExample/SSHExample.ino
 
       - name: Compile SSH example (Mega + Ethernet)
@@ -75,12 +76,14 @@ jobs:
           arduino-cli compile \
             --fqbn arduino:avr:mega \
             --build-property compiler.cpp.extra_flags="-DANSITERM_SSH_USE_ETHERNET" \
+            --library . \
             examples/SSHExample/SSHExample.ino
 
       - name: Compile SSH example (ESP32)
         run: |
           arduino-cli compile \
             --fqbn esp32:esp32:esp32 \
+            --library . \
             examples/SSHExample/SSHExample.ino
 
       - name: Analyze with CodeQL

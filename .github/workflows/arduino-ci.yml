@@ -17,8 +17,7 @@ jobs:
         uses: arduino/arduino-lint-action@v2
         with:
           compliance: strict
-          library-manager: submit
-          recursive: true
+          library-manager: update
 
   build_avr:
     name: Compile AVR examples (${{ matrix.fqbn }})
@@ -46,7 +45,7 @@ jobs:
           set -euo pipefail
           while IFS= read -r SKETCH; do
             echo "==> Building ${SKETCH} for ${{ matrix.fqbn }}"
-            arduino-cli compile --fqbn "${{ matrix.fqbn }}" "${SKETCH}"
+            arduino-cli compile --fqbn "${{ matrix.fqbn }}" --library . "${SKETCH}"
           done < <(find examples -type f -name '*.ino' ! -path '*/SSHExample/*' | sort)
 
   build_ssh_megaavr_wifi:
@@ -68,6 +67,7 @@ jobs:
           arduino-cli compile \
             --fqbn arduino:megaavr:uno2018 \
             --build-property compiler.cpp.extra_flags="-DANSITERM_SSH_USE_WIFI_NINA" \
+            --library . \
             examples/SSHExample/SSHExample.ino
 
   build_ssh_avr_ethernet:
@@ -89,6 +89,7 @@ jobs:
           arduino-cli compile \
             --fqbn arduino:avr:mega \
             --build-property compiler.cpp.extra_flags="-DANSITERM_SSH_USE_ETHERNET" \
+            --library . \
             examples/SSHExample/SSHExample.ino
 
   build_ssh_esp32:
@@ -108,4 +109,5 @@ jobs:
         run: |
           arduino-cli compile \
             --fqbn esp32:esp32:esp32 \
+            --library . \
             examples/SSHExample/SSHExample.ino
