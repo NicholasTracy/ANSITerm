@@ -5,7 +5,9 @@
  * What you learn: Simple animation loop — clearScreen each frame, writeTextAt for sprites,
  * and keyboard input over Serial (w/a/s/d move, space shoots). Uses UTF-8 symbol macros.
  *
- * Hardware: USB serial at 9600 baud; terminal must support UTF-8. No mouse required.
+ * Hardware: USB serial at 9600 baud; terminal must support UTF-8.
+ * Mouse reporting is disabled here — otherwise many terminals flood Serial with ESC sequences
+ * and WASD never arrive as plain letters.
  * reconnected() redraws after a USB session reopen on supported boards.
  *
  * License: LGPL-3.0 — see LICENSE.txt in the library root.
@@ -48,6 +50,7 @@ Direction enemyProjectileDirection = NONE;
 
 // Function declarations
 void drawScreen();
+void flushSerialInput();
 void movePlayer(char direction);
 void moveEnemy();
 void shootPlayerProjectile();
@@ -65,8 +68,9 @@ void setup() {
         ; // Wait for serial port to connect. Needed for native USB port only boards
     }
 
-    // Initialize the terminal with color names
-    terminal.begin(true, true, true, true, "white", "black"); // white text on black background
+    // Mouse off: terminal mouse mode fills the link with escape bytes and breaks WASD reads.
+    terminal.begin(true, true, false, true, "white", "black");
+    flushSerialInput();
 
     // Draw initial screen
     drawScreen();
@@ -74,20 +78,37 @@ void setup() {
 
 void loop() {
     if (terminal.reconnected()) {
-        terminal.begin(true, true, true, true, "white", "black");
+        terminal.begin(true, true, false, true, "white", "black");
+        flushSerialInput();
         drawScreen();
     }
 
-    // Main game loop
-    if (isAlive && Serial.available()) {
-        char input = Serial.read();
+    if (!isAlive || !Serial.available()) {
+        return;
+    }
+
+    bool stepped = false;
+    while (Serial.available()) {
+        char input = static_cast<char>(Serial.read());
+        if (input == '\r' || input == '\n') {
+            continue;
+        }
         movePlayer(input);
+        stepped = true;
+    }
+
+    if (stepped) {
         moveEnemy();
         updateProjectiles();
-        shootPlayerProjectile();
         shootEnemyProjectile();
         checkCollisions();
         drawScreen();
+    }
+}
+
+void flushSerialInput() {
+    while (Serial.available() > 0) {
+        Serial.read();
     }
 }
 
@@ -139,23 +160,26 @@ void movePlayer(char direction) {
 
     switch (direction) {
         case 'w':
+        case 'W':
             newY = playerY - 1;
             playerDirection = UP;
             break;
         case 'a':
+        case 'A':
             newX = playerX - 1;
             playerDirection = LEFT;
             break;
         case 's':
+        case 'S':
             newY = playerY + 1;
             playerDirection = DOWN;
             break;
         case 'd':
+        case 'D':
             newX = playerX + 1;
             playerDirection = RIGHT;
             break;
         case ' ':
-            // Fire projectile
             shootPlayerProjectile();
             return;
     }
