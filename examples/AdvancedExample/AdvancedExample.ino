@@ -67,7 +67,7 @@ void runAdvancedDemo() {
         terminal.writeTextAt(19, 68, ANSI_ARROW_DOWN " Row 3, Col 4");
 
         while (true) {
-            if (terminal.pollHostTerminalReconnect()) {
+            if (terminal.reconnected()) {
                 break;
             }
             if (terminal.detectClick(10, 20, 12, 50)) {

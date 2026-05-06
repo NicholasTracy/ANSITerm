@@ -53,7 +53,7 @@ tree_top:
     int row = 4;
 
     while (true) {
-        if (terminal.pollHostTerminalReconnect()) {
+        if (terminal.reconnected()) {
             root.close();
             goto tree_top;
         }
@@ -69,7 +69,7 @@ tree_top:
                 terminal.setTextColor("yellow");
                 terminal.writeTextAt(row, 4, fileName.c_str());
 
-                if (terminal.pollHostTerminalReconnect()) {
+                if (terminal.reconnected()) {
                     entry.close();
                     root.close();
                     goto tree_top;
@@ -89,7 +89,7 @@ tree_top:
     root.close();
 
     while (true) {
-        if (terminal.pollHostTerminalReconnect()) {
+        if (terminal.reconnected()) {
             goto tree_top;
         }
         delay(50);
@@ -122,7 +122,7 @@ void displayAnsiFile(const char* filename) {
     terminal.drawButton(22, 10, 24, 50, "Exit");
 
     while (true) {
-        if (terminal.pollHostTerminalReconnect()) {
+        if (terminal.reconnected()) {
             return;
         }
         if (terminal.detectClick(22, 10, 24, 50)) {

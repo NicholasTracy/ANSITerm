@@ -157,7 +157,7 @@ void ANSITerm::syncHostSessionState() {
 #endif
 }
 
-bool ANSITerm::pollHostTerminalReconnect() {
+bool ANSITerm::reconnected() {
     if (static_cast<void*>(&_stream) != static_cast<void*>(&Serial)) {
         return false;
     }

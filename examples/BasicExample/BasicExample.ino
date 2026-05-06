@@ -41,7 +41,7 @@ void setup() {
     drawMainScreen();
 
     while (true) {
-        if (terminal.pollHostTerminalReconnect()) {
+        if (terminal.reconnected()) {
             drawMainScreen();
             continue;
         }

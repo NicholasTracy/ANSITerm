@@ -118,7 +118,7 @@ public:
 
     // Best-effort: true once when the USB CDC host re-enumerates after disconnect (native-USB Arduino cores with USBCON).
     // UART-only boards usually reset on serial-open (DTR); Network streams are always false. Call from loop while idle.
-    bool pollHostTerminalReconnect();
+    bool reconnected();
 
     // Makes the cursor visible
     void showCursor();
@@ -132,7 +132,7 @@ private:
     // Stream object for communication
     Stream &_stream;
 
-    // Tracks USB CDC host configuration for pollHostTerminalReconnect() (USBCON builds only).
+    // Tracks USB CDC host configuration for reconnected() (USBCON builds only).
     bool _hostUsbConfigured = false;
 
     // Converts RGB values to an ANSI color code

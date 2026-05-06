@@ -6,7 +6,7 @@
  * and keyboard input over Serial (w/a/s/d move, space shoots). Uses UTF-8 symbol macros.
  *
  * Hardware: USB serial at 9600 baud; terminal must support UTF-8. No mouse required.
- * pollHostTerminalReconnect() redraws after a USB session reopen on supported boards.
+ * reconnected() redraws after a USB session reopen on supported boards.
  *
  * License: LGPL-3.0 — see LICENSE.txt in the library root.
  */
@@ -73,7 +73,7 @@ void setup() {
 }
 
 void loop() {
-    if (terminal.pollHostTerminalReconnect()) {
+    if (terminal.reconnected()) {
         terminal.begin(true, true, true, true, "white", "black");
         drawScreen();
     }

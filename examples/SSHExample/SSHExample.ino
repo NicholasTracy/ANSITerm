@@ -7,7 +7,7 @@
  *
  * Hardware: ESP8266/ESP32 Wi-Fi, WiFiNINA, or Ethernet — see CI defines ANSITERM_SSH_USE_*.
  * Client: `telnet <ip> 23` or similar raw TCP terminal (this sketch is not full SSH crypto).
- * Each new TCP session runs the UI once; pollHostTerminalReconnect() applies to Serial only here.
+ * Each new TCP session runs the UI once; reconnected() applies to Serial only here.
  *
  * License: LGPL-3.0 — see LICENSE.txt in the library root.
  */

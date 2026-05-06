@@ -23,4 +23,4 @@ parseMouseReport	KEYWORD2
 showCursor	KEYWORD2
 hideCursor	KEYWORD2
 pollInput	KEYWORD2
-pollHostTerminalReconnect	KEYWORD2
+reconnected	KEYWORD2

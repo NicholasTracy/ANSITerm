@@ -97,7 +97,7 @@ void setup() {
     paintFullUi();
 
     while (true) {
-        if (terminal.pollHostTerminalReconnect()) {
+        if (terminal.reconnected()) {
             digitalWrite(LED_BUILTIN, ledState);
             paintFullUi();
             continue;
