@@ -16,12 +16,19 @@ ANSITerm terminal(Serial);
 
 const char* PLAYER_CHAR = ANSI_SMILEY;
 const char* WALL_CHAR = ANSI_BLOCK_HALF;
-const char* ENEMY_CHAR = ANSI_SKULL;
-const char PROJECTILE_CHAR = '*';
+// ASCII so terminals like PuTTY (without Unicode skull glyphs) still show an opponent.
+const char* ENEMY_CHAR = "&";
+const char* PROJECTILE_CHAR = "*";
 
 const int SCREEN_WIDTH = 40;
 const int SCREEN_HEIGHT = 20;
 const unsigned long TICK_MS = 65;
+
+// Opponent moves once per N simulation ticks (projectiles still every tick).
+const uint8_t ENEMY_MOVE_EVERY_N_TICKS = 3;
+// How often the enemy tries the "other" axis first (weaving / not bee-lining).
+const uint8_t ENEMY_INDIRECT_MOVE_PERCENT = 42;
+const int8_t ENEMY_WANDER_CLAMP = 10;
 
 enum Direction : uint8_t { DIR_NONE, DIR_UP, DIR_DOWN, DIR_LEFT, DIR_RIGHT };
 
@@ -33,11 +40,13 @@ bool endBannerDrawn = false;
 int playerX = 10;
 int playerY = 10;
 Direction playerDirection = DIR_NONE;
+Direction playerLastTravelDir = DIR_UP;
 bool isAlive = true;
 
 int enemyX = 30;
 int enemyY = 5;
 Direction enemyDirection = DIR_NONE;
+Direction enemyLastTravelDir = DIR_RIGHT;
 
 int playerProjectileX = -1;
 int playerProjectileY = -1;
@@ -49,6 +58,10 @@ Direction enemyProjectileDirection = DIR_NONE;
 
 uint8_t enemyFireCooldown = 25;
 
+uint8_t enemyMoveTickCounter = 0;
+int8_t enemyWanderX = 0;
+int8_t enemyWanderY = 0;
+
 // Last rendered snapshot (for dirty updates)
 int prevPX = -1;
 int prevPY = -1;
@@ -59,7 +72,7 @@ int prevPPy = -1;
 int prevEPx = -1;
 int prevEPy = -1;
 
-unsigned long nextTickMs = 0;
+unsigned long lastSimMs = 0;
 bool keyHandledThisLoop = false;
 
 void flushSerialInput();
@@ -77,6 +90,8 @@ void simulationTick();
 void updateProjectiles();
 void checkCollisions();
 bool isCollision(int x, int y);
+bool cellBlocksPlayer(int x, int y);
+bool cellBlocksEnemy(int x, int y);
 
 void setup() {
     Serial.begin(9600);
@@ -89,7 +104,7 @@ void setup() {
 
     resetGameState();
     fullRedraw();
-    nextTickMs = millis() + TICK_MS;
+    lastSimMs = millis();
 }
 
 void loop() {
@@ -98,17 +113,18 @@ void loop() {
         flushSerialInput();
         resetGameState();
         fullRedraw();
-        nextTickMs = millis() + TICK_MS;
+        lastSimMs = millis();
     }
 
     keyHandledThisLoop = false;
     processKeys();
 
     const bool playing = (endState == EndState::Playing);
-    const bool tickDue = playing && (static_cast<long>(millis() - nextTickMs) >= 0);
+    const unsigned long now = millis();
+    const bool tickDue = playing && (now - lastSimMs >= TICK_MS);
 
     if (tickDue) {
-        nextTickMs = millis() + TICK_MS;
+        lastSimMs = now;
         simulationTick();
     }
 
@@ -129,7 +145,9 @@ void resetGameState() {
     enemyX = 30;
     enemyY = 5;
     playerDirection = DIR_NONE;
+    playerLastTravelDir = DIR_UP;
     enemyDirection = DIR_NONE;
+    enemyLastTravelDir = DIR_RIGHT;
     playerProjectileX = playerProjectileY = -1;
     enemyProjectileX = enemyProjectileY = -1;
     playerProjectileDirection = DIR_NONE;
@@ -138,6 +156,9 @@ void resetGameState() {
     endState = EndState::Playing;
     endBannerDrawn = false;
     enemyFireCooldown = 25;
+    enemyMoveTickCounter = 0;
+    enemyWanderX = 0;
+    enemyWanderY = 0;
     prevPX = prevPY = prevEX = prevEY = -1;
     prevPPx = prevPPy = prevEPx = prevEPy = -1;
 }
@@ -189,11 +210,11 @@ void fullRedraw() {
 
     if (playerProjectileX >= 0) {
         terminal.setTextColor("yellow");
-        terminal.writeTextAt(playerProjectileY, playerProjectileX, String(PROJECTILE_CHAR).c_str());
+        terminal.writeTextAt(playerProjectileY, playerProjectileX, PROJECTILE_CHAR);
     }
     if (enemyProjectileX >= 0) {
         terminal.setTextColor("magenta");
-        terminal.writeTextAt(enemyProjectileY, enemyProjectileX, String(PROJECTILE_CHAR).c_str());
+        terminal.writeTextAt(enemyProjectileY, enemyProjectileX, PROJECTILE_CHAR);
     }
 
     syncSnapshot();
@@ -227,6 +248,8 @@ void renderIncremental() {
             terminal.writeTextAt(playerY, playerX, "X");
             terminal.writeTextAt(SCREEN_HEIGHT / 2, SCREEN_WIDTH / 2 - 5, "GAME OVER");
         }
+        terminal.setTextColor("white");
+        terminal.writeTextAt(SCREEN_HEIGHT / 2 + 1, SCREEN_WIDTH / 2 - 10, "Press R to restart");
 
         endBannerDrawn = true;
         syncSnapshot();
@@ -255,7 +278,7 @@ void renderIncremental() {
     }
     if (playerProjectileX >= 0) {
         terminal.setTextColor("yellow");
-        terminal.writeTextAt(playerProjectileY, playerProjectileX, String(PROJECTILE_CHAR).c_str());
+        terminal.writeTextAt(playerProjectileY, playerProjectileX, PROJECTILE_CHAR);
     }
 
     if (prevEPx >= 0
@@ -264,7 +287,7 @@ void renderIncremental() {
     }
     if (enemyProjectileX >= 0) {
         terminal.setTextColor("magenta");
-        terminal.writeTextAt(enemyProjectileY, enemyProjectileX, String(PROJECTILE_CHAR).c_str());
+        terminal.writeTextAt(enemyProjectileY, enemyProjectileX, PROJECTILE_CHAR);
     }
 
     syncSnapshot();
@@ -276,6 +299,17 @@ void processKeys() {
         if (input == '\r' || input == '\n') {
             continue;
         }
+
+        if (endState != EndState::Playing) {
+            if (input == 'r' || input == 'R') {
+                resetGameState();
+                fullRedraw();
+                lastSimMs = millis();
+                keyHandledThisLoop = true;
+            }
+            continue;
+        }
+
         if (movePlayer(input)) {
             keyHandledThisLoop = true;
         }
@@ -313,16 +347,21 @@ bool movePlayer(char direction) {
             return false;
     }
 
-    if (isCollision(newX, newY)) {
+    if (cellBlocksPlayer(newX, newY)) {
         return false;
     }
     playerX = newX;
     playerY = newY;
+    playerLastTravelDir = playerDirection;
     return true;
 }
 
 void simulationTick() {
-    moveEnemy();
+    enemyMoveTickCounter++;
+    if (enemyMoveTickCounter >= ENEMY_MOVE_EVERY_N_TICKS) {
+        enemyMoveTickCounter = 0;
+        moveEnemy();
+    }
 
     updateProjectiles();
 
@@ -332,48 +371,97 @@ void simulationTick() {
     if (enemyProjectileX < 0 && enemyFireCooldown == 0) {
         if (spawnEnemyProjectile()) {
             enemyFireCooldown = 22;
+        } else {
+            enemyFireCooldown = 4;
         }
     }
 
     checkCollisions();
 }
 
-void moveEnemy() {
-    const int deltaX = playerX - enemyX;
-    const int deltaY = playerY - enemyY;
+static bool enemyTryMove(int nx, int ny, Direction d) {
+    if (cellBlocksEnemy(nx, ny)) {
+        return false;
+    }
+    enemyX = nx;
+    enemyY = ny;
+    enemyDirection = d;
+    enemyLastTravelDir = d;
+    return true;
+}
 
-    if (abs(deltaX) > abs(deltaY)) {
-        if (deltaX > 0) {
-            if (!isCollision(enemyX + 1, enemyY)) {
-                enemyX++;
-                enemyDirection = DIR_RIGHT;
-            }
-        } else {
-            if (!isCollision(enemyX - 1, enemyY)) {
-                enemyX--;
-                enemyDirection = DIR_LEFT;
-            }
+static void enemyGreedyStep(int dx, int dy, bool horizontalFirst) {
+    if (horizontalFirst) {
+        if (dx > 0 && enemyTryMove(enemyX + 1, enemyY, DIR_RIGHT)) {
+            return;
+        }
+        if (dx < 0 && enemyTryMove(enemyX - 1, enemyY, DIR_LEFT)) {
+            return;
+        }
+        if (dy > 0 && enemyTryMove(enemyX, enemyY + 1, DIR_DOWN)) {
+            return;
+        }
+        if (dy < 0 && enemyTryMove(enemyX, enemyY - 1, DIR_UP)) {
+            return;
         }
     } else {
-        if (deltaY > 0) {
-            if (!isCollision(enemyX, enemyY + 1)) {
-                enemyY++;
-                enemyDirection = DIR_DOWN;
-            }
-        } else {
-            if (!isCollision(enemyX, enemyY - 1)) {
-                enemyY--;
-                enemyDirection = DIR_UP;
-            }
+        if (dy > 0 && enemyTryMove(enemyX, enemyY + 1, DIR_DOWN)) {
+            return;
+        }
+        if (dy < 0 && enemyTryMove(enemyX, enemyY - 1, DIR_UP)) {
+            return;
+        }
+        if (dx > 0 && enemyTryMove(enemyX + 1, enemyY, DIR_RIGHT)) {
+            return;
+        }
+        if (dx < 0 && enemyTryMove(enemyX - 1, enemyY, DIR_LEFT)) {
+            return;
         }
     }
+}
+
+static void clampEnemyWander() {
+    if (enemyWanderX > ENEMY_WANDER_CLAMP) {
+        enemyWanderX = ENEMY_WANDER_CLAMP;
+    } else if (enemyWanderX < -ENEMY_WANDER_CLAMP) {
+        enemyWanderX = -ENEMY_WANDER_CLAMP;
+    }
+    if (enemyWanderY > ENEMY_WANDER_CLAMP) {
+        enemyWanderY = ENEMY_WANDER_CLAMP;
+    } else if (enemyWanderY < -ENEMY_WANDER_CLAMP) {
+        enemyWanderY = -ENEMY_WANDER_CLAMP;
+    }
+}
+
+void moveEnemy() {
+    enemyWanderX += static_cast<int8_t>(random(3) - 1);
+    enemyWanderY += static_cast<int8_t>(random(3) - 1);
+    clampEnemyWander();
+
+    const int tx = playerX + enemyWanderX;
+    const int ty = playerY + enemyWanderY;
+    const int dx = tx - enemyX;
+    const int dy = ty - enemyY;
+
+    if (dx == 0 && dy == 0) {
+        enemyWanderX += static_cast<int8_t>(random(5) - 2);
+        enemyWanderY += static_cast<int8_t>(random(5) - 2);
+        clampEnemyWander();
+        return;
+    }
+
+    bool horizontalFirst = abs(dx) >= abs(dy);
+    if (random(100) < ENEMY_INDIRECT_MOVE_PERCENT) {
+        horizontalFirst = !horizontalFirst;
+    }
+    enemyGreedyStep(dx, dy, horizontalFirst);
 }
 
 bool spawnPlayerProjectile() {
     if (playerProjectileX >= 0 || playerProjectileY >= 0) {
         return false;
     }
-    Direction dir = playerDirection;
+    Direction dir = playerLastTravelDir;
     if (dir == DIR_NONE) {
         dir = DIR_UP;
     }
@@ -395,7 +483,7 @@ bool spawnPlayerProjectile() {
         default:
             return false;
     }
-    if (isCollision(px, py)) {
+    if (cellBlocksPlayer(px, py)) {
         return false;
     }
     playerProjectileX = px;
@@ -408,7 +496,7 @@ bool spawnEnemyProjectile() {
     if (enemyProjectileX >= 0 || enemyProjectileY >= 0) {
         return false;
     }
-    Direction dir = enemyDirection;
+    Direction dir = enemyLastTravelDir;
     if (dir == DIR_NONE) {
         dir = DIR_RIGHT;
     }
@@ -430,7 +518,7 @@ bool spawnEnemyProjectile() {
         default:
             return false;
     }
-    if (isCollision(px, py)) {
+    if (cellBlocksEnemy(px, py)) {
         return false;
     }
     enemyProjectileX = px;
@@ -500,9 +588,29 @@ void checkCollisions() {
         enemyProjectileX = enemyProjectileY = -1;
         isAlive = false;
         endState = EndState::Lost;
+        return;
+    }
+
+    if (endState == EndState::Playing && isAlive && playerX == enemyX && playerY == enemyY) {
+        isAlive = false;
+        endState = EndState::Lost;
     }
 }
 
 bool isCollision(int x, int y) {
     return isWallCell(x, y);
+}
+
+bool cellBlocksPlayer(int x, int y) {
+    if (isWallCell(x, y)) {
+        return true;
+    }
+    return x == enemyX && y == enemyY;
+}
+
+bool cellBlocksEnemy(int x, int y) {
+    if (isWallCell(x, y)) {
+        return true;
+    }
+    return x == playerX && y == playerY;
 }
