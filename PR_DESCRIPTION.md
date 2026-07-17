@@ -36,7 +36,7 @@ This document matches the workflows under `.github/workflows/` as of the current
   - `examples/SSHExample/`
   - `examples/ESPWiFiControlExample/`
 - Uses `arduino-cli compile --fqbn … --library . <sketch.ino>` so the checkout root is treated as the library under test.
-- **UNO exception:** `examples/ANSFileExample/ANSFileExample.ino` is **skipped** on UNO because dynamic RAM usage exceeds typical UNO SRAM; it still builds on Leonardo and Mega.
+- **UNO/Leonardo exception:** `examples/ANSFileExample/ANSFileExample.ino` is **skipped** on UNO and Leonardo because SD + file-list buffers exceed their SRAM; it still builds on Mega.
 
 ### Compile ESP examples
 

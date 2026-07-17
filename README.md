@@ -38,7 +38,7 @@ Search **ANSITerm** in *Arduino IDE → Tools → Manage Libraries…* and click
 
 | Target | Examples compiled in CI |
 |--------|-------------------------|
-| `arduino:avr:uno` / `leonardo` / `mega` | Basic, Advanced, Buttons, Graphic, ANSFile (Leo/Mega; skipped on Uno for SRAM) |
+| `arduino:avr:uno` / `leonardo` / `mega` | Basic, Advanced, Buttons, Graphic; ANSFile on Mega only (skipped on Uno/Leonardo for SRAM) |
 | `esp32:esp32:esp32` | `ESPWiFiControlExample`, `SSHExample` |
 | `esp8266:esp8266:generic` | `ESPWiFiControlExample`, `SSHExample` |
 | `arduino:megaavr:uno2018` + WiFiNINA | `SSHExample` |

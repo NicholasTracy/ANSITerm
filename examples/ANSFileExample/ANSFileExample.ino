@@ -18,8 +18,9 @@
 ANSITerm terminal(Serial);
 
 const int chipSelect = 4;
-const uint8_t MAX_LISTED_FILES = 12;
-const uint8_t MAX_NAME_LEN = 31;
+// Keep the file list compact for AVR SRAM (Leonardo ~2.5 KB).
+const uint8_t MAX_LISTED_FILES = 8;
+const uint8_t MAX_NAME_LEN = 16;
 
 char listedFiles[MAX_LISTED_FILES][MAX_NAME_LEN + 1];
 uint8_t listedRows[MAX_LISTED_FILES];

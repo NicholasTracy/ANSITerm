@@ -32,8 +32,8 @@ const uint16_t TCP_TERMINAL_PORT = 23;
 const uint32_t UI_REFRESH_MS = 300;
 const uint32_t STA_CONNECT_TIMEOUT_MS = 12000;
 const uint8_t MAX_SCAN_RESULTS = 8;
-const uint8_t MAX_SSID_LEN = 32;
-const uint8_t MAX_PASS_LEN = 64;
+const uint8_t WIFI_SSID_CAP = 32;
+const uint8_t WIFI_PASS_CAP = 64;
 const uint16_t SETTINGS_MAGIC = 0xA75E;
 const uint8_t SETTINGS_VERSION = 1;
 const size_t EEPROM_SIZE = 512;
@@ -76,9 +76,9 @@ unsigned long staConnectStartedAt = 0;
 unsigned long lastUiPaintMs = 0;
 bool forceRedraw = true;
 
-char selectedSsid[MAX_SSID_LEN + 1] = {0};
-char selectedPass[MAX_PASS_LEN + 1] = {0};
-char scanSsid[MAX_SCAN_RESULTS][MAX_SSID_LEN + 1];
+char selectedSsid[WIFI_SSID_CAP + 1] = {0};
+char selectedPass[WIFI_PASS_CAP + 1] = {0};
+char scanSsid[MAX_SCAN_RESULTS][WIFI_SSID_CAP + 1];
 int32_t scanRssi[MAX_SCAN_RESULTS];
 uint8_t scanCount = 0;
 int8_t selectedScanIndex = -1;
@@ -89,8 +89,8 @@ struct PersistedSettings {
     uint8_t version;
     uint8_t mode;
     uint8_t apEnabled;
-    char ssid[MAX_SSID_LEN + 1];
-    char pass[MAX_PASS_LEN + 1];
+    char ssid[WIFI_SSID_CAP + 1];
+    char pass[WIFI_PASS_CAP + 1];
 };
 
 void beginTerminal(ANSITerm& term, bool enableMouse);
@@ -435,7 +435,7 @@ void handlePasskeyTyping(Stream& stream, UiSession& ui) {
         }
         if (c >= 32 && c <= 126) {
             const size_t len = strlen(selectedPass);
-            if (len < MAX_PASS_LEN) {
+            if (len < WIFI_PASS_CAP) {
                 selectedPass[len] = c;
                 selectedPass[len + 1] = '\0';
                 forceRedraw = true;
