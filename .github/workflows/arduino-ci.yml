@@ -51,7 +51,46 @@ jobs:
             fi
             echo "==> Building ${SKETCH} for ${{ matrix.fqbn }}"
             arduino-cli compile --fqbn "${{ matrix.fqbn }}" --library . "${SKETCH}"
-          done < <(find examples -type f -name '*.ino' ! -path '*/SSHExample/*' | sort)
+          done < <(find examples -type f -name '*.ino' \
+            ! -path '*/SSHExample/*' \
+            ! -path '*/ESPWiFiControlExample/*' \
+            | sort)
+
+  build_esp_examples:
+    name: Compile ESP examples (${{ matrix.fqbn }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        fqbn:
+          - esp32:esp32:esp32
+          - esp8266:esp8266:generic
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Arduino CLI
+        uses: arduino/setup-arduino-cli@v2
+        with:
+          version: "1.x"
+      - name: Install ESP core
+        run: |
+          if [[ "${{ matrix.fqbn }}" == esp32:* ]]; then
+            arduino-cli core update-index --additional-urls https://espressif.github.io/arduino-esp32/package_esp32_index.json
+            arduino-cli core install esp32:esp32 --additional-urls https://espressif.github.io/arduino-esp32/package_esp32_index.json
+          else
+            arduino-cli core update-index --additional-urls https://arduino.esp8266.com/stable/package_esp8266com_index.json
+            arduino-cli core install esp8266:esp8266 --additional-urls https://arduino.esp8266.com/stable/package_esp8266com_index.json
+          fi
+      - name: Compile ESP-targeted examples
+        shell: bash
+        run: |
+          set -euo pipefail
+          for SKETCH in \
+            examples/ESPWiFiControlExample/ESPWiFiControlExample.ino \
+            examples/SSHExample/SSHExample.ino
+          do
+            echo "==> Building ${SKETCH} for ${{ matrix.fqbn }}"
+            arduino-cli compile --fqbn "${{ matrix.fqbn }}" --library . "${SKETCH}"
+          done
 
   build_ssh_megaavr_wifi:
     name: Compile SSH example (UNO WiFi Rev2 + WiFiNINA)
@@ -94,25 +133,5 @@ jobs:
           arduino-cli compile \
             --fqbn arduino:avr:mega \
             --build-property compiler.cpp.extra_flags="-DANSITERM_SSH_USE_ETHERNET" \
-            --library . \
-            examples/SSHExample/SSHExample.ino
-
-  build_ssh_esp32:
-    name: Compile SSH example (ESP32)
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Set up Arduino CLI
-        uses: arduino/setup-arduino-cli@v2
-        with:
-          version: "1.x"
-      - name: Install ESP32 core
-        run: |
-          arduino-cli core update-index --additional-urls https://espressif.github.io/arduino-esp32/package_esp32_index.json
-          arduino-cli core install esp32:esp32 --additional-urls https://espressif.github.io/arduino-esp32/package_esp32_index.json
-      - name: Compile SSH example for ESP32
-        run: |
-          arduino-cli compile \
-            --fqbn esp32:esp32:esp32 \
             --library . \
             examples/SSHExample/SSHExample.ino

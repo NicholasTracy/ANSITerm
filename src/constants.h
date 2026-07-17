@@ -67,7 +67,8 @@
 
 // ANSI block elements
 #define ANSI_BLOCK_FULL            "\u2588"  // █ Full Block
-#define ANSI_BLOCK_HALF            "\u2592"  // ▒ Medium Shade Block
+#define ANSI_BLOCK_HALF            "\u2584"  // ▄ Lower Half Block
+#define ANSI_BLOCK_MEDIUM          "\u2592"  // ▒ Medium Shade Block
 #define ANSI_BLOCK_LIGHT           "\u2591"  // ░ Light Shade Block
 
 // ANSI arrow symbols

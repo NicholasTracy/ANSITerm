@@ -26,40 +26,41 @@ This document matches the workflows under `.github/workflows/` as of the current
 ### Lint (`arduino-lint-action`)
 
 - Uses [arduino/arduino-lint-action@v2](https://github.com/arduino/arduino-lint-action).
-- Settings: `compliance: permissive`, `library-manager: false`  
-  (avoids blocking the repo on strict Library Manager submission rules while nested or legacy layout exists.)
+- Settings: `compliance: strict`, `library-manager: submit`.
 
 ### Compile AVR examples (matrix)
 
 - Boards: `arduino:avr:uno`, `arduino:avr:leonardo`, `arduino:avr:mega`.
 - Installs core `arduino:avr` and library **SD** (for `ANSFileExample`).
-- Compiles every sketch under `examples/**/*.ino` **except** `examples/SSHExample/` (handled in dedicated jobs).
+- Compiles every sketch under `examples/**/*.ino` **except**:
+  - `examples/SSHExample/`
+  - `examples/ESPWiFiControlExample/`
 - Uses `arduino-cli compile --fqbn … --library . <sketch.ino>` so the checkout root is treated as the library under test.
 - **UNO exception:** `examples/ANSFileExample/ANSFileExample.ino` is **skipped** on UNO because dynamic RAM usage exceeds typical UNO SRAM; it still builds on Leonardo and Mega.
 
-### Compile `SSHExample` (three separate jobs)
+### Compile ESP examples
 
-`examples/SSHExample/SSHExample.ino` is built with explicit stacks:
+- Boards: `esp32:esp32:esp32`, `esp8266:esp8266:generic`.
+- Compiles `ESPWiFiControlExample` and `SSHExample` for each.
+
+### Compile `SSHExample` (additional stacks)
 
 1. **UNO WiFi Rev2 + WiFiNINA** — `arduino:megaavr:uno2018`, `-DANSITERM_SSH_USE_WIFI_NINA`, `WiFiNINA` library.
 2. **Mega + Ethernet** — `arduino:avr:mega`, `-DANSITERM_SSH_USE_ETHERNET`, `Ethernet` library.
-3. **ESP32** — `esp32:esp32:esp32`, ESP32 core from [Espressif’s package index](https://espressif.github.io/arduino-esp32/package_esp32_index.json).
 
 ## CodeQL job
 
 - Initializes CodeQL for `cpp` with `build-mode: manual` ([github/codeql-action](https://github.com/github/codeql-action)).
-- Installs **arduino:avr**, **arduino:megaavr**, libraries **SD**, **Ethernet**, **WiFiNINA**, and **esp32:esp32** (same additional URL as Arduino CI).
-- **Example sketches** (excluding `SSHExample`): compiled once with `--fqbn arduino:avr:mega --library .` (Mega chosen so RAM-heavy examples fit).
-- **SSHExample:** same three compiles as Arduino CI (megaavr + WiFiNINA, Mega + Ethernet, ESP32).
+- Installs **arduino:avr**, **arduino:megaavr**, **esp32:esp32**, **esp8266:esp8266**, and libraries **SD**, **Ethernet**, **WiFiNINA**.
+- Compiles AVR examples (excluding SSH + ESP Wi-Fi control) on Mega, ESP sketches on ESP32/ESP8266, plus the WiFiNINA/Ethernet SSH variants.
 - Runs `github/codeql-action/analyze@v3` after builds.
 
 ## Maintainer checklist
 
-- [ ] Confirm `library.properties` maintainer/contact fields match what you want for releases and registry (if submitting to Library Manager later).
-- [ ] Optional: tighten lint back to strict / Library Manager mode after removing `.development` if it appears (duplicate `ANSITerm/` subtree has been removed from the repo).
-- [ ] CI green on `master` / `main` for both workflows.
+- [ ] Confirm `library.properties` maintainer/contact fields match what you want for releases and registry.
+- [ ] CI green on `master` / `main` for both workflows after pushing ESP-targeted example changes.
 
 ## Related notes
 
 - Historic Travis configuration is not part of the current CI path; automation is GitHub Actions only.
-- To extend coverage, add FQBNs to the AVR matrix or add jobs mirroring the SSH pattern (extra cores + `--library .`).
+- Prefer ESP32/ESP8266 jobs for new network UI examples; keep AVR for classic Serial demos.

@@ -42,27 +42,39 @@ jobs:
           arduino-cli lib install WiFiNINA
           arduino-cli core update-index --additional-urls https://espressif.github.io/arduino-esp32/package_esp32_index.json
           arduino-cli core install esp32:esp32 --additional-urls https://espressif.github.io/arduino-esp32/package_esp32_index.json
+          arduino-cli core update-index --additional-urls https://arduino.esp8266.com/stable/package_esp8266com_index.json
+          arduino-cli core install esp8266:esp8266 --additional-urls https://arduino.esp8266.com/stable/package_esp8266com_index.json
 
-      - name: List example sketches
-        id: ex
+      - name: Compile AVR examples (arduino:avr:mega)
         shell: bash
         run: |
-          EXS=$(find examples -type f -name '*.ino' ! -path '*/SSHExample/*' | sort || true)
-          echo "examples<<EOF" >> $GITHUB_OUTPUT
-          echo "${EXS}" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
-          echo "Found sketches:"
-          echo "${EXS}"
-
-      - name: Compile examples (arduino:avr:mega)
-        if: ${{ steps.ex.outputs.examples != '' }}
-        shell: bash
-        run: |
-          set -e
+          set -euo pipefail
           while IFS= read -r SKETCH; do
             echo "==> Building $SKETCH"
             arduino-cli compile --fqbn arduino:avr:mega --library . "$SKETCH"
-          done <<< "${{ steps.ex.outputs.examples }}"
+          done < <(find examples -type f -name '*.ino' \
+            ! -path '*/SSHExample/*' \
+            ! -path '*/ESPWiFiControlExample/*' \
+            | sort)
+
+      - name: Compile ESP examples (ESP32)
+        shell: bash
+        run: |
+          set -euo pipefail
+          for SKETCH in \
+            examples/ESPWiFiControlExample/ESPWiFiControlExample.ino \
+            examples/SSHExample/SSHExample.ino
+          do
+            echo "==> Building $SKETCH for esp32:esp32:esp32"
+            arduino-cli compile --fqbn esp32:esp32:esp32 --library . "$SKETCH"
+          done
+
+      - name: Compile ESP Wi-Fi control (ESP8266)
+        run: |
+          arduino-cli compile \
+            --fqbn esp8266:esp8266:generic \
+            --library . \
+            examples/ESPWiFiControlExample/ESPWiFiControlExample.ino
 
       - name: Compile SSH example (UNO WiFi Rev2 + WiFiNINA)
         run: |
@@ -77,13 +89,6 @@ jobs:
           arduino-cli compile \
             --fqbn arduino:avr:mega \
             --build-property compiler.cpp.extra_flags="-DANSITERM_SSH_USE_ETHERNET" \
-            --library . \
-            examples/SSHExample/SSHExample.ino
-
-      - name: Compile SSH example (ESP32)
-        run: |
-          arduino-cli compile \
-            --fqbn esp32:esp32:esp32 \
             --library . \
             examples/SSHExample/SSHExample.ino
 

@@ -12,9 +12,10 @@ ANSITerm is an Arduino library that sends ANSI/VT-style escape sequences to a te
 ## Features (high level)
 
 - Screen & cursor control: `clearScreen()`, `setCursorPosition()`, `resetFormatting()`
-- Colors: 8-bit, hex, RGB, and common names via `setTextColor*()` / `setBackgroundColor*()`
+- Colors: 8-bit palette index, `#RRGGBB` / `#RGB` hex, CSS names, and RGB triplets via `setTextColor()` / `setBackgroundColor()`
 - Drawing: single/double line boxes, tables, text at coordinates, delete at position
 - UI helpers: single/double “buttons”, click detection (requires terminal mouse reporting)
+- Input: `pollInput()` for Enter, arrows, and SGR mouse press/release
 - Mouse: enable/disable reporting, parse terminal mouse packets
 
 See the `examples/` folder for usage patterns.
@@ -35,12 +36,15 @@ Search **ANSITerm** in *Arduino IDE → Tools → Manage Libraries…* and click
 
 ## Supported / CI-tested boards
 
-The CI compiles every sketch in `examples/` for:
-- `arduino:avr:uno`
-- `arduino:avr:leonardo`
-- `arduino:avr:mega`
+| Target | Examples compiled in CI |
+|--------|-------------------------|
+| `arduino:avr:uno` / `leonardo` / `mega` | Basic, Advanced, Buttons, Graphic, ANSFile (Leo/Mega; skipped on Uno for SRAM) |
+| `esp32:esp32:esp32` | `ESPWiFiControlExample`, `SSHExample` |
+| `esp8266:esp8266:generic` | `ESPWiFiControlExample`, `SSHExample` |
+| `arduino:megaavr:uno2018` + WiFiNINA | `SSHExample` |
+| `arduino:avr:mega` + Ethernet | `SSHExample` |
 
-You can extend the matrix in [`.github/workflows/arduino-ci.yml`](.github/workflows/arduino-ci.yml) to other cores (ESP32, etc.) once supported.
+`architectures=*` — the library itself builds anywhere a `Stream` is available. Network examples need the matching Wi‑Fi/Ethernet stack for your board.
 
 ---
 

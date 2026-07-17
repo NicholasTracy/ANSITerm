@@ -5,7 +5,7 @@
  * Author: Nicholas Tracy (2024)
  * https://github.com/NicholasTracy
  *
- * File: ANSITerm.h
+ * File: ANSITerm.cpp
  * 
  * Description:
  * ANSITerm is an Arduino library designed to provide advanced ANSI escape sequence control 
@@ -21,11 +21,18 @@
 
 #include "ANSITerm.h"
 
+#include <ctype.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
 #if defined(USBCON)
 #include <USBAPI.h>
 #endif
 
 namespace {
+
+constexpr unsigned long kEscTimeoutMs = 75;
 
 bool readDecimal(Stream& s, uint16_t& out) {
     out = 0;
@@ -37,16 +44,18 @@ bool readDecimal(Stream& s, uint16_t& out) {
         }
         s.read();
         any = true;
-        out = static_cast<uint16_t>(out * 10u + static_cast<unsigned>(p - '0'));
-        if (out > 500) {
+        if (out > 500 / 10 || (out == 500 / 10 && static_cast<unsigned>(p - '0') > 500 % 10)) {
+            out = 501;
             break;
         }
+        out = static_cast<uint16_t>(out * 10u + static_cast<unsigned>(p - '0'));
     }
     return any;
 }
 
-bool waitByte(Stream& s, int& out, unsigned long deadlineMs) {
-    while (millis() < deadlineMs) {
+bool waitByte(Stream& s, int& out, unsigned long timeoutMs) {
+    const unsigned long start = millis();
+    while ((millis() - start) < timeoutMs) {
         if (s.available()) {
             out = s.read();
             return true;
@@ -56,16 +65,18 @@ bool waitByte(Stream& s, int& out, unsigned long deadlineMs) {
     return false;
 }
 
-bool expectCharBy(Stream& s, char ch, unsigned long deadlineMs) {
+bool expectCharBy(Stream& s, char ch, unsigned long timeoutMs) {
     int c = 0;
-    if (!waitByte(s, c, deadlineMs)) {
+    if (!waitByte(s, c, timeoutMs)) {
         return false;
     }
     return c == ch;
 }
 
-bool drainSgrMouseBody(Stream& s, uint8_t& row, uint8_t& col, unsigned long deadlineMs) {
+// Parses CSI < btn ; x ; y M|m. Sets isPress from the final byte (M=press, m=release).
+bool drainSgrMouseBody(Stream& s, uint8_t& row, uint8_t& col, bool& isPress, unsigned long timeoutMs) {
     row = col = 0;
+    isPress = false;
     uint16_t btn = 0;
     uint16_t px = 0;
     uint16_t py = 0;
@@ -73,25 +84,26 @@ bool drainSgrMouseBody(Stream& s, uint8_t& row, uint8_t& col, unsigned long dead
     if (!readDecimal(s, btn)) {
         return false;
     }
-    if (!expectCharBy(s, ';', deadlineMs)) {
+    if (!expectCharBy(s, ';', timeoutMs)) {
         return false;
     }
     if (!readDecimal(s, px)) {
         return false;
     }
-    if (!expectCharBy(s, ';', deadlineMs)) {
+    if (!expectCharBy(s, ';', timeoutMs)) {
         return false;
     }
     if (!readDecimal(s, py)) {
         return false;
     }
-    if (!waitByte(s, c, deadlineMs)) {
+    if (!waitByte(s, c, timeoutMs)) {
         return false;
     }
     if (c != 'M' && c != 'm') {
         return false;
     }
     (void)btn;
+    isPress = (c == 'M');
     col = (px > 255) ? 255 : static_cast<uint8_t>(px);
     row = (py > 255) ? 255 : static_cast<uint8_t>(py);
     return true;
@@ -118,6 +130,21 @@ bool isInternalVerticalCol(uint8_t col, uint8_t startCol, uint8_t cols, uint8_t 
 }
 
 } // namespace
+
+bool ANSITerm::validBox(uint8_t startRow, uint8_t startCol, uint8_t endRow, uint8_t endCol) {
+    return endRow > startRow && endCol > startCol;
+}
+
+void ANSITerm::drawButtonLabel(uint8_t startRow, uint8_t startCol, uint8_t endRow, uint8_t endCol, const char* text) {
+    const uint8_t textLength = static_cast<uint8_t>(strlen(text));
+    const uint8_t boxWidth = static_cast<uint8_t>(endCol - startCol - 1);
+    const uint8_t textRow = static_cast<uint8_t>(startRow + (endRow - startRow) / 2);
+    uint8_t textCol = static_cast<uint8_t>(startCol + 1);
+    if (textLength < boxWidth) {
+        textCol = static_cast<uint8_t>(startCol + (boxWidth - textLength) / 2 + 1);
+    }
+    writeTextAt(textRow, textCol, text);
+}
 
 // Constructor: Initializes the ANSITerm object with a specified Stream (e.g., Serial)
 ANSITerm::ANSITerm(Stream &stream) : _stream(stream) {}
@@ -195,13 +222,17 @@ void ANSITerm::setTextColor(uint8_t color) {
     sendAnsiCommand(command);
 }
 
+void ANSITerm::setTextColor(uint8_t r, uint8_t g, uint8_t b) {
+    setTextColor(rgbToAnsi(r, g, b));
+}
+
 // Sets the text color using a color name or hex value
 void ANSITerm::setTextColor(const char* color) {
     if (!color) {
         return;
     }
-    if (isdigit(color[0])) {
-        setTextColor(atoi(color)); // ANSI number
+    if (isdigit(static_cast<unsigned char>(color[0]))) {
+        setTextColor(static_cast<uint8_t>(atoi(color))); // ANSI number
     } else if (color[0] == '#') {
         setTextColor(hexToAnsi(color)); // Hex color
     } else {
@@ -216,13 +247,17 @@ void ANSITerm::setBackgroundColor(uint8_t color) {
     sendAnsiCommand(command);
 }
 
+void ANSITerm::setBackgroundColor(uint8_t r, uint8_t g, uint8_t b) {
+    setBackgroundColor(rgbToAnsi(r, g, b));
+}
+
 // Sets the background color using a color name or hex value
 void ANSITerm::setBackgroundColor(const char* color) {
     if (!color) {
         return;
     }
-    if (isdigit(color[0])) {
-        setBackgroundColor(atoi(color)); // ANSI number
+    if (isdigit(static_cast<unsigned char>(color[0]))) {
+        setBackgroundColor(static_cast<uint8_t>(atoi(color))); // ANSI number
     } else if (color[0] == '#') {
         setBackgroundColor(hexToAnsi(color)); // Hex color
     } else {
@@ -232,6 +267,10 @@ void ANSITerm::setBackgroundColor(const char* color) {
 
 // Draws a box using single-line box-drawing characters
 void ANSITerm::drawBox(uint8_t startRow, uint8_t startCol, uint8_t endRow, uint8_t endCol) {
+    if (!validBox(startRow, startCol, endRow, endCol)) {
+        return;
+    }
+
     setCursorPosition(startRow, startCol);
     _stream.print(ANSI_BOX_TOP_LEFT);
     for (uint8_t col = startCol + 1; col < endCol; col++) {
@@ -256,6 +295,10 @@ void ANSITerm::drawBox(uint8_t startRow, uint8_t startCol, uint8_t endRow, uint8
 
 // Draws a box using double-line box-drawing characters
 void ANSITerm::drawDoubleBox(uint8_t startRow, uint8_t startCol, uint8_t endRow, uint8_t endCol) {
+    if (!validBox(startRow, startCol, endRow, endCol)) {
+        return;
+    }
+
     setCursorPosition(startRow, startCol);
     _stream.print(ANSI_BOX_DOUBLE_TOP_LEFT);
     for (uint8_t col = startCol + 1; col < endCol; col++) {
@@ -281,9 +324,7 @@ void ANSITerm::drawDoubleBox(uint8_t startRow, uint8_t startCol, uint8_t endRow,
 // Draws a single-line grid inside (startRow,startCol)-(endRow,endCol).
 // rows/cols are cell counts; interior space is split evenly (integer division).
 void ANSITerm::drawTable(uint8_t startRow, uint8_t startCol, uint8_t endRow, uint8_t endCol, uint8_t rows, uint8_t cols) {
-    drawBox(startRow, startCol, endRow, endCol);
-
-    if (rows < 1 || cols < 1 || endRow <= startRow || endCol <= startCol) {
+    if (rows < 1 || cols < 1 || !validBox(startRow, startCol, endRow, endCol)) {
         return;
     }
 
@@ -295,6 +336,8 @@ void ANSITerm::drawTable(uint8_t startRow, uint8_t startCol, uint8_t endRow, uin
     if (rowHeight < 1 || colWidth < 1) {
         return;
     }
+
+    drawBox(startRow, startCol, endRow, endCol);
 
     // Top/bottom borders: replace horizontal segments with tees where vertical dividers meet the frame
     for (uint8_t j = 1; j < cols; j++) {
@@ -357,78 +400,72 @@ void ANSITerm::deleteAtPosition(uint8_t row, uint8_t col) {
 
 // Draws a button with centered text using single-line box-drawing characters
 void ANSITerm::drawButton(uint8_t startRow, uint8_t startCol, uint8_t endRow, uint8_t endCol, const char* text) {
-    if (!text) {
+    // Need at least one interior column for the label (endCol >= startCol + 2).
+    if (!text || !validBox(startRow, startCol, endRow, endCol) || endCol < startCol + 2) {
         return;
     }
     drawBox(startRow, startCol, endRow, endCol);
-
-    uint8_t textLength = strlen(text);
-    uint8_t boxWidth = endCol - startCol - 1;
-    uint8_t textRow = startRow + (endRow - startRow) / 2;
-    uint8_t textCol = startCol + (boxWidth - textLength) / 2 + 1;
-
-    writeTextAt(textRow, textCol, text);
+    drawButtonLabel(startRow, startCol, endRow, endCol, text);
 }
 
 // Draws a button with centered text using double-line box-drawing characters
 void ANSITerm::drawDoubleButton(uint8_t startRow, uint8_t startCol, uint8_t endRow, uint8_t endCol, const char* text) {
-    if (!text) {
+    if (!text || !validBox(startRow, startCol, endRow, endCol) || endCol < startCol + 2) {
         return;
     }
     drawDoubleBox(startRow, startCol, endRow, endCol);
-
-    uint8_t textLength = strlen(text);
-    uint8_t boxWidth = endCol - startCol - 1;
-    uint8_t textRow = startRow + (endRow - startRow) / 2;
-    uint8_t textCol = startCol + (boxWidth - textLength) / 2 + 1;
-
-    writeTextAt(textRow, textCol, text);
+    drawButtonLabel(startRow, startCol, endRow, endCol, text);
 }
 
 // Detects if a mouse click occurs within the specified button or box boundaries
 bool ANSITerm::detectClick(uint8_t startRow, uint8_t startCol, uint8_t endRow, uint8_t endCol) {
     uint8_t row, col;
     parseMouseReport(row, col);
+    if (row == 0 || col == 0) {
+        return false;
+    }
     return (row >= startRow && row <= endRow && col >= startCol && col <= endCol);
 }
 
 // Enables mouse tracking in the terminal
 void ANSITerm::enableMouseReporting() {
     sendAnsiCommand("\033[?1000h"); // Enable basic mouse tracking
-    sendAnsiCommand("\033[?1015h"); // Enable extended coordinates
     sendAnsiCommand("\033[?1006h"); // Enable SGR (1006) extended mode
 }
 
 // Disables mouse tracking
 void ANSITerm::disableMouseReporting() {
     sendAnsiCommand("\033[?1000l"); // Disable basic mouse tracking
-    sendAnsiCommand("\033[?1015l"); // Disable extended coordinates
     sendAnsiCommand("\033[?1006l"); // Disable SGR (1006) extended mode
 }
 
 // Parses the mouse report to determine the row and column where a click occurred
 void ANSITerm::parseMouseReport(uint8_t& row, uint8_t& col) {
     row = col = 0;
-    const unsigned long deadline = millis() + 75;
     if (!_stream.available() || _stream.peek() != '\033') {
         return;
     }
     int c = 0;
-    if (!waitByte(_stream, c, deadline) || c != '\033') {
+    if (!waitByte(_stream, c, kEscTimeoutMs) || c != '\033') {
         return;
     }
-    if (!expectCharBy(_stream, '[', deadline)) {
+    if (!expectCharBy(_stream, '[', kEscTimeoutMs)) {
         return;
     }
-    if (!waitByte(_stream, c, deadline)) {
+    if (!waitByte(_stream, c, kEscTimeoutMs)) {
         return;
     }
     if (c != '<') {
         return;
     }
-    if (!drainSgrMouseBody(_stream, row, col, deadline)) {
-        row = col = 0;
+    bool isPress = false;
+    uint8_t mr = 0;
+    uint8_t mc = 0;
+    if (!drainSgrMouseBody(_stream, mr, mc, isPress, kEscTimeoutMs) || !isPress) {
+        return;
     }
+    row = mr;
+    col = mc;
 }
 
 bool ANSITerm::pollInput(ANSITermInput& ev) {
@@ -452,19 +489,18 @@ bool ANSITerm::pollInput(ANSITermInput& ev) {
         return false;
     }
 
-    const unsigned long deadline = millis() + 75;
     int c = 0;
-    if (!waitByte(_stream, c, deadline) || c != '\033') {
+    if (!waitByte(_stream, c, kEscTimeoutMs) || c != '\033') {
         return false;
     }
 
     int intro = 0;
-    if (!waitByte(_stream, intro, deadline)) {
+    if (!waitByte(_stream, intro, kEscTimeoutMs)) {
         return false;
     }
 
     if (intro == 'O') {
-        if (!waitByte(_stream, c, deadline)) {
+        if (!waitByte(_stream, c, kEscTimeoutMs)) {
             return false;
         }
         if (c == 'A') {
@@ -483,17 +519,18 @@ bool ANSITerm::pollInput(ANSITermInput& ev) {
         return false;
     }
 
-    if (!waitByte(_stream, c, deadline)) {
+    if (!waitByte(_stream, c, kEscTimeoutMs)) {
         return false;
     }
 
     if (c == '<') {
         uint8_t mr = 0;
         uint8_t mc = 0;
-        if (!drainSgrMouseBody(_stream, mr, mc, deadline)) {
+        bool isPress = false;
+        if (!drainSgrMouseBody(_stream, mr, mc, isPress, kEscTimeoutMs)) {
             return false;
         }
-        ev.kind = ANSITermInput::MousePress;
+        ev.kind = isPress ? ANSITermInput::MousePress : ANSITermInput::MouseRelease;
         ev.mouseRow = mr;
         ev.mouseCol = mc;
         return true;
@@ -530,10 +567,32 @@ uint8_t ANSITerm::hexToAnsi(const char* hex) {
     if (hex[0] == '#') {
         hex++;
     }
-    long int rgb = strtol(hex, NULL, 16);
-    uint8_t r = (rgb >> 16) & 0xFF;
-    uint8_t g = (rgb >> 8) & 0xFF;
-    uint8_t b = rgb & 0xFF;
+
+    size_t len = strlen(hex);
+    uint8_t r = 0;
+    uint8_t g = 0;
+    uint8_t b = 0;
+
+    if (len == 3) {
+        // CSS shorthand #RGB → #RRGGBB
+        char expanded[7];
+        expanded[0] = hex[0];
+        expanded[1] = hex[0];
+        expanded[2] = hex[1];
+        expanded[3] = hex[1];
+        expanded[4] = hex[2];
+        expanded[5] = hex[2];
+        expanded[6] = '\0';
+        long int rgb = strtol(expanded, nullptr, 16);
+        r = static_cast<uint8_t>((rgb >> 16) & 0xFF);
+        g = static_cast<uint8_t>((rgb >> 8) & 0xFF);
+        b = static_cast<uint8_t>(rgb & 0xFF);
+    } else {
+        long int rgb = strtol(hex, nullptr, 16);
+        r = static_cast<uint8_t>((rgb >> 16) & 0xFF);
+        g = static_cast<uint8_t>((rgb >> 8) & 0xFF);
+        b = static_cast<uint8_t>(rgb & 0xFF);
+    }
     return rgbToAnsi(r, g, b);
 }
 

@@ -9,6 +9,7 @@ setCursorPosition	KEYWORD2
 resetFormatting	KEYWORD2
 setTextColor	KEYWORD2
 setBackgroundColor	KEYWORD2
+
 drawBox	KEYWORD2
 drawDoubleBox	KEYWORD2
 drawTable	KEYWORD2

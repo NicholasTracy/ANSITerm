@@ -35,7 +35,8 @@ struct ANSITermInput {
         ArrowDown,
         ArrowLeft,
         ArrowRight,
-        MousePress
+        MousePress,
+        MouseRelease
     };
     Kind kind = None;
     uint8_t mouseRow = 0;
@@ -55,34 +56,42 @@ public:
     // - showCursor: Shows the cursor if true; hides it if false (default: true)
     // - defaultTextColor: Sets the default text color (can be ANSI number, hex, or name) (default: "white")
     // - defaultBackgroundColor: Sets the default background color (can be ANSI number, hex, or name) (default: "black")
+    // Note: begin(..., enableMouse=false) does not send disable sequences if mouse was already enabled.
     void begin(bool clear = true, bool resetCursor = true, bool enableMouse = true, bool showCursor = true,
                const char* defaultTextColor = "white", const char* defaultBackgroundColor = "black");
 
     // Clears the terminal screen
     void clearScreen();
     
-    // Sets the cursor position to the specified row and column
+    // Sets the cursor position (1-based row/column, matching common ANSI terminals)
     void setCursorPosition(uint8_t row, uint8_t col);
     
-    // Resets text formatting (color, bold, etc.) to the default state
+    // Resets terminal SGR formatting (color, bold, etc.) — not the defaults passed to begin()
     void resetFormatting();
 
-    // Sets the text color using an ANSI color number
-    void setTextColor(uint8_t color);             
+    // Sets the text color using an ANSI 256-color palette index (0–255)
+    void setTextColor(uint8_t color);
+
+    // Sets the text color from RGB (quantized to the xterm 6×6×6 cube, indices 16–231)
+    void setTextColor(uint8_t r, uint8_t g, uint8_t b);
     
-    // Sets the text color using a color name or hex value
+    // Sets the text color using a decimal ANSI index string, #RRGGBB / #RGB hex, or lowercase CSS name
     void setTextColor(const char* color);         
     
-    // Sets the background color using an ANSI color number
-    void setBackgroundColor(uint8_t color);       
+    // Sets the background color using an ANSI 256-color palette index (0–255)
+    void setBackgroundColor(uint8_t color);
+
+    // Sets the background color from RGB (quantized to the xterm 6×6×6 cube, indices 16–231)
+    void setBackgroundColor(uint8_t r, uint8_t g, uint8_t b);
     
-    // Sets the background color using a color name or hex value
+    // Sets the background color using a decimal ANSI index string, #RRGGBB / #RGB hex, or lowercase CSS name
     void setBackgroundColor(const char* color);   
 
-    // Draws a box using single-line box-drawing characters
+    // Draws a box using single-line box-drawing characters.
+    // Requires endRow > startRow and endCol > startCol (1-based inclusive corners); otherwise no-op.
     void drawBox(uint8_t startRow, uint8_t startCol, uint8_t endRow, uint8_t endCol);
     
-    // Draws a box using double-line box-drawing characters
+    // Draws a box using double-line box-drawing characters (same geometry rules as drawBox)
     void drawDoubleBox(uint8_t startRow, uint8_t startCol, uint8_t endRow, uint8_t endCol);
     
     // Grid of single-line box-drawing cells; rows/cols = number of cells (>=1). Bounding box uses the same
@@ -95,25 +104,29 @@ public:
     // Deletes (clears) content at a specific row and column, leaving it blank
     void deleteAtPosition(uint8_t row, uint8_t col);
 
-    // Draws a button with centered text using single-line box-drawing characters
+    // Draws a button with centered text using single-line box-drawing characters.
+    // Oversized labels are left-aligned in the interior (byte length; UTF-8 wide glyphs may mis-center).
     void drawButton(uint8_t startRow, uint8_t startCol, uint8_t endRow, uint8_t endCol, const char* text);
     
     // Draws a button with centered text using double-line box-drawing characters
     void drawDoubleButton(uint8_t startRow, uint8_t startCol, uint8_t endRow, uint8_t endCol, const char* text);
     
-    // Detects if a mouse click occurs within the specified button or box boundaries
+    // True when an SGR mouse press (not release) falls inside the inclusive rectangle.
+    // Consumes one mouse report from the stream when present.
     bool detectClick(uint8_t startRow, uint8_t startCol, uint8_t endRow, uint8_t endCol);
 
-    // Enables mouse tracking in the terminal
+    // Enables mouse tracking in the terminal (SGR/1006; parser supports SGR only)
     void enableMouseReporting();
     
     // Disables mouse tracking
     void disableMouseReporting();
     
-    // Parses the mouse report to determine the row and column where a click occurred
+    // Parses one SGR mouse press into row/col (1-based). Release events are consumed but leave 0,0.
+    // On timeout/malformed input, row and col are 0. Prefer pollInput() for new code.
     void parseMouseReport(uint8_t& row, uint8_t& col);
 
-    // Reads the next Enter, CSI arrow key, or SGR mouse press from the stream (non-blocking aside from short ESC waits).
+    // Reads the next Enter, CSI arrow key, or SGR mouse press/release.
+    // Non-blocking when no bytes are waiting; incomplete ESC sequences wait up to ~75 ms.
     bool pollInput(ANSITermInput& out);
 
     // Best-effort: true once when the USB CDC host re-enumerates after disconnect (native-USB Arduino cores with USBCON).
@@ -128,6 +141,8 @@ public:
 
 private:
     void syncHostSessionState();
+    static bool validBox(uint8_t startRow, uint8_t startCol, uint8_t endRow, uint8_t endCol);
+    void drawButtonLabel(uint8_t startRow, uint8_t startCol, uint8_t endRow, uint8_t endCol, const char* text);
 
     // Stream object for communication
     Stream &_stream;
@@ -149,8 +164,3 @@ private:
 };
 
 #endif // ANSITERM_H
-
-
-
-
-

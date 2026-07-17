@@ -15,7 +15,7 @@
 ANSITerm terminal(Serial);
 
 const char* PLAYER_CHAR = ANSI_SMILEY;
-const char* WALL_CHAR = ANSI_BLOCK_HALF;
+const char* WALL_CHAR = ANSI_BLOCK_MEDIUM;
 // ASCII so terminals like PuTTY (without Unicode skull glyphs) still show an opponent.
 const char* ENEMY_CHAR = "&";
 const char* PROJECTILE_CHAR = "*";
