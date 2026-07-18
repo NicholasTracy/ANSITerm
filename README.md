@@ -26,8 +26,8 @@ See the `examples/` folder for usage patterns, or the [Examples section of the W
 
 ## Installation
 
-### Via Library Manager (after first release)
-Search **ANSITerm** in *Arduino IDE → Tools → Manage Libraries…* and click **Install**.
+### Via Library Manager
+Search **ANSITerm** in *Arduino IDE → Tools → Manage Libraries…* and click **Install** (available after the Library Manager index picks up the latest release — usually within a day of registry acceptance).
 
 ### Manual
 1. Download this repository (Code → Download ZIP).
