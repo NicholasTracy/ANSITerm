@@ -26,7 +26,7 @@ See the `examples/` folder for usage patterns, or the [Examples section of the W
 
 ## Screenshots
 
-Host-rendered previews of the example UIs (regenerated in CI; refreshed on each release via an auto-merged PR). Full gallery and interaction GIFs: [Wiki Screenshot Roster](https://github.com/NicholasTracy/ANSITerm/wiki/Screenshot-Roster).
+A quick look at a few of the example UIs. More examples and short demos are on the [Wiki](https://github.com/NicholasTracy/ANSITerm/wiki/Using-the-Examples).
 
 <a id="screenshot-basic"></a>
 
@@ -45,8 +45,6 @@ Host-rendered previews of the example UIs (regenerated in CI; refreshed on each 
 ### ButtonsExample
 
 [![ButtonsExample](docs/screenshots/hero-buttons.png)](https://github.com/NicholasTracy/ANSITerm/wiki/Example-Buttons#screenshot-buttons)
-
-Roster / filenames: [`docs/screenshots/roster.yml`](docs/screenshots/roster.yml) · [`docs/screenshots/index.md`](docs/screenshots/index.md)
 
 ---
 

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Update Wiki pages with screenshot embeds from the roster (tag-pinned raw URLs)."""
+"""Embed example screenshots into Wiki pages (user-facing copy only)."""
 
 from __future__ import annotations
 
@@ -32,18 +32,18 @@ def section_for_example(raw_ref: str, entry: dict) -> str:
     lines = [
         "",
         f'<a id="{entry["wiki_anchor"]}"></a>',
-        f"## Screenshot: {entry['example']}",
+        "## Preview",
         "",
         entry.get("caption", ""),
         "",
-        img_md(raw_ref, entry["static"], f"{entry['example']} static"),
+        img_md(raw_ref, entry["static"], entry["example"]),
         "",
     ]
     if entry.get("motion"):
         lines += [
-            "**Interaction preview** (emulated keys / mouse / Wi‑Fi)",
+            "### In action",
             "",
-            img_md(raw_ref, entry["motion"], f"{entry['example']} motion"),
+            img_md(raw_ref, entry["motion"], f"{entry['example']} demo"),
             "",
         ]
     return "\n".join(lines)
@@ -66,41 +66,13 @@ def upsert_section(page: Path, marker: str, body: str) -> None:
     page.write_text(text, encoding="utf-8")
 
 
-def build_roster_page(label: str, raw_ref: str, roster: dict) -> str:
-    lines = [
-        "# Screenshot Roster",
-        "",
-        f"Labeled for release `{label}`; image files served from `{raw_ref}` "
-        f"(see `docs/screenshots/roster.yml` in the main repo).",
-        "",
-        "## README heroes",
-        "",
-        "| Anchor | File |",
-        "|--------|------|",
-    ]
-    for h in roster.get("heroes", []):
-        lines.append(f"| `#{h['readme_anchor']}` | `{h['file']}` |")
-        lines.append("")
-        lines.append(img_md(raw_ref, h["file"], h["caption"]))
-        lines.append("")
-    lines += [
-        "## All examples",
-        "",
-        "| ID | Static | Motion | Wiki anchor |",
-        "|----|--------|--------|-------------|",
-    ]
-    for e in roster["examples"]:
-        motion = e.get("motion", "—")
-        lines.append(
-            f"| `{e['id']}` | `{e['static']}` | `{motion}` | `#{e['wiki_anchor']}` |"
-        )
-    lines.append("")
-    return "\n".join(lines)
-
-
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--tag", required=True, help="Release label shown on Wiki pages")
+    parser.add_argument(
+        "--tag",
+        required=True,
+        help="Release label for the Wiki commit message (not shown on pages)",
+    )
     parser.add_argument(
         "--raw-ref",
         default="master",
@@ -127,7 +99,13 @@ def main() -> int:
         upsert_section(page, entry["id"], section_for_example(args.raw_ref, entry))
 
     using = wiki_dir / "Using-the-Examples.md"
-    thumb_lines = ["", "| Example | Preview |", "|---------|---------|"]
+    thumb_lines = [
+        "",
+        "## What the examples look like",
+        "",
+        "| Example | Preview |",
+        "|---------|---------|",
+    ]
     for entry in roster["examples"]:
         url = (
             f"https://raw.githubusercontent.com/NicholasTracy/ANSITerm/"
@@ -140,18 +118,21 @@ def main() -> int:
     thumb_lines.append("")
     upsert_section(using, "gallery", "\n".join(thumb_lines))
 
+    # Do not publish an internal screenshot roster to the Wiki.
     roster_page = wiki_dir / "Screenshot-Roster.md"
-    roster_page.write_text(
-        build_roster_page(args.tag, args.raw_ref, roster), encoding="utf-8"
-    )
+    if roster_page.exists():
+        roster_page.unlink()
 
-    # Sidebar link
     sidebar = wiki_dir / "_Sidebar.md"
     if sidebar.exists():
         sb = sidebar.read_text(encoding="utf-8")
-        if "Screenshot-Roster" not in sb:
-            sb = sb.rstrip() + "\n* [Screenshot Roster](Screenshot-Roster)\n"
-            sidebar.write_text(sb, encoding="utf-8")
+        cleaned = "\n".join(
+            line
+            for line in sb.splitlines()
+            if "Screenshot-Roster" not in line and "Screenshot Roster" not in line
+        )
+        if cleaned != sb.rstrip("\n"):
+            sidebar.write_text(cleaned.rstrip() + "\n", encoding="utf-8")
 
     run(["git", "config", "user.name", "github-actions[bot]"], cwd=wiki_dir)
     run(
@@ -159,11 +140,10 @@ def main() -> int:
         cwd=wiki_dir,
     )
     run(["git", "add", "-A"], cwd=wiki_dir)
-    # commit if needed
     status = subprocess.check_output(["git", "status", "--porcelain"], cwd=wiki_dir, text=True)
     if status.strip():
         run(
-            ["git", "commit", "-m", f"Embed screenshots for {args.tag}."],
+            ["git", "commit", "-m", f"Refresh example previews for {args.tag}."],
             cwd=wiki_dir,
         )
         run(["git", "push", "origin", "HEAD"], cwd=wiki_dir)

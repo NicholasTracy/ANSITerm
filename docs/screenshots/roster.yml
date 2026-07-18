@@ -8,17 +8,17 @@ heroes:
   - id: basic
     file: hero-basic.png
     readme_anchor: screenshot-basic
-    caption: BasicExample — welcome screen and button
+    caption: Welcome screen with a button
     wiki_page: Example-Basic
   - id: advanced
     file: hero-advanced.png
     readme_anchor: screenshot-advanced
-    caption: AdvancedExample — table and Start Again control
+    caption: Table layout and Start Again control
     wiki_page: Example-Advanced
   - id: buttons
     file: hero-buttons.png
     readme_anchor: screenshot-buttons
-    caption: ButtonsExample — keyboard highlight on Toggle LED
+    caption: Menu with Toggle LED highlighted
     wiki_page: Example-Buttons
 
 examples:
@@ -28,46 +28,46 @@ examples:
     motion: ex-basic-motion.gif
     wiki_page: Example-Basic
     wiki_anchor: screenshot-basic
-    caption: Welcome UI; motion shows mouse click then Button clicked!
+    caption: Welcome screen with a clickable button.
   - id: advanced
     example: AdvancedExample
     static: ex-advanced-static.png
     motion: ex-advanced-motion.gif
     wiki_page: Example-Advanced
     wiki_anchor: screenshot-advanced
-    caption: Full advanced UI; motion shows loading bar then Enter restart
+    caption: Tables, symbols, and a Start Again control.
   - id: buttons
     example: ButtonsExample
     static: ex-buttons-static.png
     motion: ex-buttons-motion.gif
     wiki_page: Example-Buttons
     wiki_anchor: screenshot-buttons
-    caption: Menu highlight; motion shows arrows, Enter toggle, Exit
+    caption: A small menu you can drive with the keyboard or mouse.
   - id: graphic
     example: GraphicExample
     static: ex-graphic-static.png
     motion: ex-graphic-motion.gif
     wiki_page: Example-Graphic
     wiki_anchor: screenshot-graphic
-    caption: Arena layout; motion shows WASD movement and win banner
+    caption: A tiny arena game using WASD keys.
   - id: ansfile
     example: ANSFileExample
     static: ex-ansfile-static.png
     motion: ex-ansfile-motion.gif
     wiki_page: Example-ANS-Files
     wiki_anchor: screenshot-ansfile
-    caption: SD file list; motion shows arrow select and Exit
+    caption: Browse `.ans` files from an SD card.
   - id: network
     example: NetworkTerminalExample
     static: ex-network-static.png
     motion: ex-network-motion.gif
     wiki_page: Example-Network-Terminal
     wiki_anchor: screenshot-network
-    caption: Telnet UI; motion shows Wi-Fi connect then client session
+    caption: The same kind of UI over a network connection.
   - id: esp
     example: ESPWiFiControlExample
     static: ex-esp-static.png
     motion: ex-esp-motion.gif
     wiki_page: Example-ESP-WiFi-Control
     wiki_anchor: screenshot-esp
-    caption: Dual dashboard; motion shows scan, random SSIDs, connect
+    caption: Scan networks and connect from a terminal dashboard.
