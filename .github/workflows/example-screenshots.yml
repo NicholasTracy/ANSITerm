@@ -1,0 +1,142 @@
+name: Example screenshots
+
+on:
+  pull_request:
+    branches: [ master, main ]
+    paths:
+      - 'tools/screenshots/**'
+      - 'docs/screenshots/**'
+      - 'examples/**'
+      - '.github/workflows/example-screenshots.yml'
+  push:
+    branches: [ master, main ]
+    paths:
+      - 'tools/screenshots/**'
+      - 'docs/screenshots/**'
+      - 'examples/**'
+      - '.github/workflows/example-screenshots.yml'
+    tags: [ 'v*' ]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  check:
+    name: Generate / check screenshots
+    if: github.event_name != 'push' || !startsWith(github.ref, 'refs/tags/')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install fonts and Python deps
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y fonts-dejavu-core
+          python -m pip install --upgrade pip
+          pip install -r tools/screenshots/requirements.txt
+      - name: Check drift against committed docs
+        run: python tools/screenshots/generate.py --check
+      - name: Generate (workflow_dispatch preview)
+        if: github.event_name == 'workflow_dispatch'
+        run: python tools/screenshots/generate.py
+      - name: Upload artifacts
+        if: github.event_name == 'workflow_dispatch'
+        uses: actions/upload-artifact@v4
+        with:
+          name: example-screenshots
+          path: docs/screenshots/*
+
+  release-pr:
+    name: Release screenshot PR (auto-merge)
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install fonts and Python deps
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y fonts-dejavu-core
+          python -m pip install --upgrade pip
+          pip install -r tools/screenshots/requirements.txt
+      - name: Regenerate screenshots
+        run: |
+          set -euo pipefail
+          python tools/screenshots/generate.py
+          # Preserve generated assets across the branch switch to master.
+          mkdir -p "$RUNNER_TEMP/ansiterm-shots"
+          cp -a docs/screenshots/. "$RUNNER_TEMP/ansiterm-shots/"
+      - name: Create branch, PR, and auto-merge
+        id: shotpr
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          TAG="${GITHUB_REF_NAME}"
+          BRANCH="chore/screenshots-${TAG}"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch origin master
+          git checkout -B "$BRANCH" "origin/master"
+          mkdir -p docs/screenshots
+          cp -a "$RUNNER_TEMP/ansiterm-shots/." docs/screenshots/
+          git add docs/screenshots
+          if git diff --staged --quiet; then
+            echo "No screenshot changes for ${TAG}"
+            echo "skipped=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          git commit -m "Update example screenshots for ${TAG}."
+          git push -u origin "$BRANCH" --force
+          PR_URL=$(gh pr list --head "$BRANCH" --json url --jq '.[0].url // empty')
+          if [[ -z "${PR_URL}" ]]; then
+            PR_URL=$(gh pr create \
+              --title "Update example screenshots for ${TAG}" \
+              --body "$(cat <<EOF
+          ## Summary
+          Regenerated terminal screenshots/GIFs for release \`${TAG}\`.
+
+          - Static frames for all examples
+          - Motion GIFs with emulated keyboard/mouse/Wi-Fi interactions
+          - Roster: \`docs/screenshots/roster.yml\` / \`docs/screenshots/index.md\`
+
+          Opened by CI; auto-merged so Wiki embeds can pin \`master\` assets.
+          EOF
+          )" \
+              --base master \
+              --head "$BRANCH")
+          fi
+          echo "PR: ${PR_URL}"
+          echo "pr_url=${PR_URL}" >> "$GITHUB_OUTPUT"
+          # Prefer auto-merge; GITHUB_TOKEN pushes do not re-trigger PR checks, so
+          # also squash-merge immediately when the PR is mergeable.
+          gh pr merge --auto --squash "$PR_URL" || true
+          gh pr merge --squash --delete-branch "$PR_URL" || true
+          for i in $(seq 1 60); do
+            STATE=$(gh pr view "$PR_URL" --json state --jq .state)
+            if [[ "$STATE" == "MERGED" ]]; then
+              echo "Merged ${PR_URL}"
+              exit 0
+            fi
+            echo "Waiting for merge (${i}) state=${STATE}"
+            sleep 10
+          done
+          echo "Timed out waiting for screenshot PR merge" >&2
+          exit 1
+      - name: Sync Wiki screenshot embeds
+        if: steps.shotpr.outputs.skipped != 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          TAG="${GITHUB_REF_NAME}"
+          # Assets live on master after the auto-merged PR; label pages with the release tag.
+          python tools/screenshots/sync_wiki.py --tag "$TAG" --raw-ref master

@@ -37,3 +37,8 @@
 # Local archive/extracted duplicate library artifacts
 ANSITerm.zip
 ANSITerm/
+
+__pycache__/
+*.py[cod]
+.Python
+

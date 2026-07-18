@@ -24,6 +24,32 @@ See the `examples/` folder for usage patterns, or the [Examples section of the W
 
 ---
 
+## Screenshots
+
+Host-rendered previews of the example UIs (regenerated in CI; refreshed on each release via an auto-merged PR). Full gallery and interaction GIFs: [Wiki Screenshot Roster](https://github.com/NicholasTracy/ANSITerm/wiki/Screenshot-Roster).
+
+<a id="screenshot-basic"></a>
+
+### BasicExample
+
+[![BasicExample](docs/screenshots/hero-basic.png)](https://github.com/NicholasTracy/ANSITerm/wiki/Example-Basic#screenshot-basic)
+
+<a id="screenshot-advanced"></a>
+
+### AdvancedExample
+
+[![AdvancedExample](docs/screenshots/hero-advanced.png)](https://github.com/NicholasTracy/ANSITerm/wiki/Example-Advanced#screenshot-advanced)
+
+<a id="screenshot-buttons"></a>
+
+### ButtonsExample
+
+[![ButtonsExample](docs/screenshots/hero-buttons.png)](https://github.com/NicholasTracy/ANSITerm/wiki/Example-Buttons#screenshot-buttons)
+
+Roster / filenames: [`docs/screenshots/roster.yml`](docs/screenshots/roster.yml) · [`docs/screenshots/index.md`](docs/screenshots/index.md)
+
+---
+
 ## Installation
 
 ### Via Library Manager
@@ -80,10 +106,19 @@ void loop() {}
 
 ## Releasing
 
-1. Update `library.properties` `version=` (e.g., `0.1.0`).
-2. Tag and push: `git tag -a v0.1.0 -m "ANSITerm 0.1.0" && git push --follow-tags`.
+1. Update `library.properties` `version=` (e.g., `0.2.1`).
+2. Tag and push: `git tag -a v0.2.1 -m "ANSITerm 0.2.1" && git push --follow-tags`.
 3. Create a GitHub Release from the tag.
-4. Submit your repository URL to the Arduino **[Library Manager registry](https://github.com/arduino/library-registry)** (add to `repositories.txt`). Subsequent semver tags are indexed automatically once accepted.
+4. The **Example screenshots** workflow regenerates PNGs/GIFs, opens a PR, and auto-merges it; then updates the Wiki embeds.
+5. Subsequent semver tags are indexed by Arduino Library Manager automatically.
+
+To regenerate screenshots locally:
+
+```bash
+pip install -r tools/screenshots/requirements.txt
+python tools/screenshots/generate.py
+python tools/screenshots/generate.py --check
+```
 
 ---
 
