@@ -2,55 +2,55 @@ name: Example screenshots
 
 on:
   pull_request:
-    branches: [ master, main ]
+    branches: [master, main]
     paths:
       - 'tools/screenshots/**'
       - 'docs/screenshots/**'
       - 'examples/**'
       - '.github/workflows/example-screenshots.yml'
   push:
-    branches: [ master, main ]
+    branches: [master, main]
     paths:
       - 'tools/screenshots/**'
       - 'docs/screenshots/**'
       - 'examples/**'
       - '.github/workflows/example-screenshots.yml'
-    tags: [ 'v*' ]
+    tags: ['v*']
   workflow_dispatch:
 
-permissions:
-  contents: write
-  pull-requests: write
+concurrency:
+  group: screenshots-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 
 jobs:
   check:
-    name: Generate / check screenshots
+    name: Check
     if: github.event_name != 'push' || !startsWith(github.ref, 'refs/tags/')
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - name: Install fonts and Python deps
+      - name: Install dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y fonts-dejavu-core
           python -m pip install --upgrade pip
           pip install -r tools/screenshots/requirements.txt
-      - name: Regenerate screenshots
+      - name: Generate and detect drift
         id: regen
         run: |
           set -euo pipefail
-          # Linux runners are the source of truth for PNG/GIF bytes (FreeType
-          # rasterization differs across OS even with the same TTF).
           python tools/screenshots/generate.py
           if git diff --quiet -- docs/screenshots; then
             echo "drift=false" >> "$GITHUB_OUTPUT"
-            echo "Screenshots OK (no drift)."
+            echo "Screenshots OK."
           else
             echo "drift=true" >> "$GITHUB_OUTPUT"
-            echo "Screenshot drift detected:"
             git --no-pager diff --stat -- docs/screenshots
           fi
       - name: Upload regenerated screenshots
@@ -59,39 +59,35 @@ jobs:
         with:
           name: regenerated-screenshots
           path: docs/screenshots/*
-      - name: Open auto-merge PR with Linux goldens
-        if: steps.regen.outputs.drift == 'true' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+      - name: Sync drifted screenshots via PR
+        if: >-
+          steps.regen.outputs.drift == 'true' &&
+          (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
-          BRANCH="chore/screenshots-linux-$(echo '${{ github.sha }}' | cut -c1-7)"
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          BRANCH="chore/screenshots-linux-${GITHUB_SHA::7}"
           git checkout -B "$BRANCH"
           git add docs/screenshots
-          git commit -m "Sync example screenshots to Linux CI renderer."
-          git push -u origin "$BRANCH" --force
-          PR_URL=$(gh pr list --head "$BRANCH" --json url --jq '.[0].url // empty')
-          if [[ -z "${PR_URL}" ]]; then
-            PR_URL=$(gh pr create \
-              --title "Sync example screenshots (Linux CI)" \
-              --body "Regenerated on ubuntu-latest so PNG/GIF bytes match the drift gate." \
-              --base master \
-              --head "$BRANCH")
-          fi
-          gh pr merge --auto --squash "$PR_URL" || true
-          gh pr merge --squash --delete-branch "$PR_URL" || true
-      - name: Fail when drift remains on pull_request
+          chmod +x tools/screenshots/ci_open_merge_pr.sh
+          tools/screenshots/ci_open_merge_pr.sh \
+            --branch "$BRANCH" \
+            --title "Sync example screenshots to Linux CI renderer." \
+            --body "Regenerated on ubuntu-latest so committed PNG/GIF bytes match CI."
+      - name: Fail on PR drift
         if: steps.regen.outputs.drift == 'true' && github.event_name == 'pull_request'
         run: |
-          echo "Screenshot drift on PR. Re-run generate on ubuntu (or merge the sync PR) and commit docs/screenshots." >&2
+          echo "Screenshot drift on this PR. Commit Linux-generated docs/screenshots." >&2
           exit 1
 
-  release-pr:
-    name: Release screenshot PR (auto-merge)
+  release:
+    name: Release update
     if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
     steps:
       - uses: actions/checkout@v4
         with:
@@ -99,20 +95,19 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - name: Install fonts and Python deps
+      - name: Install dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y fonts-dejavu-core
           python -m pip install --upgrade pip
           pip install -r tools/screenshots/requirements.txt
-      - name: Regenerate screenshots
+      - name: Generate screenshots
         run: |
           set -euo pipefail
           python tools/screenshots/generate.py
-          # Preserve generated assets across the branch switch to master.
           mkdir -p "$RUNNER_TEMP/ansiterm-shots"
           cp -a docs/screenshots/. "$RUNNER_TEMP/ansiterm-shots/"
-      - name: Create branch, PR, and auto-merge
+      - name: Open and merge screenshot PR
         id: shotpr
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -120,61 +115,18 @@ jobs:
           set -euo pipefail
           TAG="${GITHUB_REF_NAME}"
           BRANCH="chore/screenshots-${TAG}"
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git fetch origin master
-          git checkout -B "$BRANCH" "origin/master"
+          git checkout -B "$BRANCH" origin/master
           mkdir -p docs/screenshots
           cp -a "$RUNNER_TEMP/ansiterm-shots/." docs/screenshots/
           git add docs/screenshots
-          if git diff --staged --quiet; then
-            echo "No screenshot changes for ${TAG}"
-            echo "skipped=true" >> "$GITHUB_OUTPUT"
-            exit 0
-          fi
-          git commit -m "Update example screenshots for ${TAG}."
-          git push -u origin "$BRANCH" --force
-          PR_URL=$(gh pr list --head "$BRANCH" --json url --jq '.[0].url // empty')
-          if [[ -z "${PR_URL}" ]]; then
-            PR_URL=$(gh pr create \
-              --title "Update example screenshots for ${TAG}" \
-              --body "$(cat <<EOF
-          ## Summary
-          Regenerated terminal screenshots/GIFs for release \`${TAG}\`.
-
-          - Static frames for all examples
-          - Motion GIFs with emulated keyboard/mouse/Wi-Fi interactions
-          - Roster: \`docs/screenshots/roster.yml\` / \`docs/screenshots/index.md\`
-
-          Opened by CI; auto-merged so Wiki embeds can pin \`master\` assets.
-          EOF
-          )" \
-              --base master \
-              --head "$BRANCH")
-          fi
-          echo "PR: ${PR_URL}"
-          echo "pr_url=${PR_URL}" >> "$GITHUB_OUTPUT"
-          # Prefer auto-merge; GITHUB_TOKEN pushes do not re-trigger PR checks, so
-          # also squash-merge immediately when the PR is mergeable.
-          gh pr merge --auto --squash "$PR_URL" || true
-          gh pr merge --squash --delete-branch "$PR_URL" || true
-          for i in $(seq 1 60); do
-            STATE=$(gh pr view "$PR_URL" --json state --jq .state)
-            if [[ "$STATE" == "MERGED" ]]; then
-              echo "Merged ${PR_URL}"
-              exit 0
-            fi
-            echo "Waiting for merge (${i}) state=${STATE}"
-            sleep 10
-          done
-          echo "Timed out waiting for screenshot PR merge" >&2
-          exit 1
-      - name: Sync Wiki screenshot embeds
+          chmod +x tools/screenshots/ci_open_merge_pr.sh
+          tools/screenshots/ci_open_merge_pr.sh \
+            --branch "$BRANCH" \
+            --title "Update example screenshots for ${TAG}." \
+            --body "Regenerated example previews for release \`${TAG}\`."
+      - name: Sync Wiki embeds
         if: steps.shotpr.outputs.skipped != 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          set -euo pipefail
-          TAG="${GITHUB_REF_NAME}"
-          # Assets live on master after the auto-merged PR; label pages with the release tag.
-          python tools/screenshots/sync_wiki.py --tag "$TAG" --raw-ref master
+        run: python tools/screenshots/sync_wiki.py --tag "${GITHUB_REF_NAME}" --raw-ref master

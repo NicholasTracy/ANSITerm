@@ -2,25 +2,31 @@ name: Arduino CI
 
 on:
   push:
-    branches: [ master, main ]
-    tags: [ 'v*' ]
+    branches: [master, main]
+    tags: ['v*']
   pull_request:
-    branches: [ master, main ]
+    branches: [master, main]
+
+concurrency:
+  group: arduino-ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+env:
+  ARDUINO_CLI_VERSION: '1.x'
 
 jobs:
   lint:
-    name: Arduino Lint
+    name: Lint
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Lint (Library Manager / strict)
-        uses: arduino/arduino-lint-action@v2
+      - uses: arduino/arduino-lint-action@v2
         with:
           compliance: strict
           library-manager: update
 
   build_avr:
-    name: Compile AVR examples (${{ matrix.fqbn }})
+    name: AVR (${{ matrix.fqbn }})
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -31,107 +37,95 @@ jobs:
           - arduino:avr:mega
     steps:
       - uses: actions/checkout@v4
-      - name: Set up Arduino CLI
-        uses: arduino/setup-arduino-cli@v2
+      - uses: arduino/setup-arduino-cli@v2
         with:
-          version: "1.x"
-      - name: Install AVR core
+          version: ${{ env.ARDUINO_CLI_VERSION }}
+      - name: Install core and SD
         run: |
           arduino-cli core update-index
           arduino-cli core install arduino:avr
           arduino-cli lib install SD
-      - name: Compile AVR-compatible examples
+      - name: Compile examples
         shell: bash
         run: |
           set -euo pipefail
-          while IFS= read -r SKETCH; do
-            if [[ ("${{ matrix.fqbn }}" == "arduino:avr:uno" || "${{ matrix.fqbn }}" == "arduino:avr:leonardo") && "${SKETCH}" == *"/ANSFileExample/"* ]]; then
-              echo "==> Skipping ${SKETCH} for ${{ matrix.fqbn }} due to SRAM limits"
+          while IFS= read -r sketch; do
+            if [[ "${{ matrix.fqbn }}" != arduino:avr:mega && "$sketch" == */ANSFileExample/* ]]; then
+              echo "==> Skip $sketch on ${{ matrix.fqbn }} (SRAM)"
               continue
             fi
-            echo "==> Building ${SKETCH} for ${{ matrix.fqbn }}"
-            arduino-cli compile --fqbn "${{ matrix.fqbn }}" --library . "${SKETCH}"
+            echo "==> $sketch"
+            arduino-cli compile --fqbn "${{ matrix.fqbn }}" --library . "$sketch"
           done < <(find examples -type f -name '*.ino' \
             ! -path '*/NetworkTerminalExample/*' \
             ! -path '*/ESPWiFiControlExample/*' \
             | sort)
 
-  build_esp_examples:
-    name: Compile ESP examples (${{ matrix.fqbn }})
+  build_esp:
+    name: ESP (${{ matrix.fqbn }})
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        fqbn:
-          - esp32:esp32:esp32
-          - esp8266:esp8266:generic
+        include:
+          - fqbn: esp32:esp32:esp32
+            url: https://espressif.github.io/arduino-esp32/package_esp32_index.json
+            core: esp32:esp32
+          - fqbn: esp8266:esp8266:generic
+            url: https://arduino.esp8266.com/stable/package_esp8266com_index.json
+            core: esp8266:esp8266
     steps:
       - uses: actions/checkout@v4
-      - name: Set up Arduino CLI
-        uses: arduino/setup-arduino-cli@v2
+      - uses: arduino/setup-arduino-cli@v2
         with:
-          version: "1.x"
-      - name: Install ESP core
+          version: ${{ env.ARDUINO_CLI_VERSION }}
+      - name: Install core
         run: |
-          if [[ "${{ matrix.fqbn }}" == esp32:* ]]; then
-            arduino-cli core update-index --additional-urls https://espressif.github.io/arduino-esp32/package_esp32_index.json
-            arduino-cli core install esp32:esp32 --additional-urls https://espressif.github.io/arduino-esp32/package_esp32_index.json
-          else
-            arduino-cli core update-index --additional-urls https://arduino.esp8266.com/stable/package_esp8266com_index.json
-            arduino-cli core install esp8266:esp8266 --additional-urls https://arduino.esp8266.com/stable/package_esp8266com_index.json
-          fi
-      - name: Compile ESP-targeted examples
+          arduino-cli core update-index --additional-urls "${{ matrix.url }}"
+          arduino-cli core install "${{ matrix.core }}" --additional-urls "${{ matrix.url }}"
+      - name: Compile network examples
         shell: bash
         run: |
           set -euo pipefail
-          for SKETCH in \
+          for sketch in \
             examples/ESPWiFiControlExample/ESPWiFiControlExample.ino \
             examples/NetworkTerminalExample/NetworkTerminalExample.ino
           do
-            echo "==> Building ${SKETCH} for ${{ matrix.fqbn }}"
-            arduino-cli compile --fqbn "${{ matrix.fqbn }}" --library . "${SKETCH}"
+            echo "==> $sketch"
+            arduino-cli compile --fqbn "${{ matrix.fqbn }}" --library . "$sketch"
           done
 
-  build_net_megaavr_wifi:
-    name: Compile network example (UNO WiFi Rev2 + WiFiNINA)
+  build_network:
+    name: Network (${{ matrix.name }})
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: UNO WiFi Rev2
+            fqbn: arduino:megaavr:uno2018
+            core: arduino:megaavr
+            lib: WiFiNINA
+            flags: -DANSITERM_NET_USE_WIFI_NINA
+          - name: Mega + Ethernet
+            fqbn: arduino:avr:mega
+            core: arduino:avr
+            lib: Ethernet
+            flags: -DANSITERM_NET_USE_ETHERNET
     steps:
       - uses: actions/checkout@v4
-      - name: Set up Arduino CLI
-        uses: arduino/setup-arduino-cli@v2
+      - uses: arduino/setup-arduino-cli@v2
         with:
-          version: "1.x"
-      - name: Install MegaAVR core and WiFiNINA library
+          version: ${{ env.ARDUINO_CLI_VERSION }}
+      - name: Install core and library
         run: |
           arduino-cli core update-index
-          arduino-cli core install arduino:megaavr
-          arduino-cli lib install WiFiNINA
-      - name: Compile network example for UNO WiFi Rev2
+          arduino-cli core install "${{ matrix.core }}"
+          arduino-cli lib install "${{ matrix.lib }}"
+      - name: Compile NetworkTerminalExample
         run: |
           arduino-cli compile \
-            --fqbn arduino:megaavr:uno2018 \
-            --build-property compiler.cpp.extra_flags="-DANSITERM_NET_USE_WIFI_NINA" \
-            --library . \
-            examples/NetworkTerminalExample/NetworkTerminalExample.ino
-
-  build_net_avr_ethernet:
-    name: Compile network example (Mega + Ethernet)
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Set up Arduino CLI
-        uses: arduino/setup-arduino-cli@v2
-        with:
-          version: "1.x"
-      - name: Install AVR core and Ethernet library
-        run: |
-          arduino-cli core update-index
-          arduino-cli core install arduino:avr
-          arduino-cli lib install Ethernet
-      - name: Compile network example for Mega with Ethernet
-        run: |
-          arduino-cli compile \
-            --fqbn arduino:avr:mega \
-            --build-property compiler.cpp.extra_flags="-DANSITERM_NET_USE_ETHERNET" \
+            --fqbn "${{ matrix.fqbn }}" \
+            --build-property "compiler.cpp.extra_flags=${{ matrix.flags }}" \
             --library . \
             examples/NetworkTerminalExample/NetworkTerminalExample.ino
