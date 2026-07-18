@@ -1,0 +1,39 @@
+name: Question / help
+description: Ask how something works, or confirm expected behavior.
+title: "[Question]: "
+labels: ["question"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        For how-to guides, start with the [Wiki](https://github.com/NicholasTracy/ANSITerm/wiki). Use this form when the docs do not answer your question.
+  - type: textarea
+    id: question
+    attributes:
+      label: Your question
+    validations:
+      required: true
+  - type: dropdown
+    id: topic
+    attributes:
+      label: Topic
+      options:
+        - Installation
+        - Choosing a terminal
+        - Examples
+        - Colors / drawing
+        - Keyboard / mouse
+        - Network / ESP
+        - Something else
+    validations:
+      required: true
+  - type: input
+    id: board-terminal
+    attributes:
+      label: Board and terminal (if relevant)
+      placeholder: "Uno + PuTTY, ESP32 + telnet, …"
+  - type: textarea
+    id: tried
+    attributes:
+      label: What have you already tried?
+      description: Wiki pages you read, examples you ran, settings you changed.

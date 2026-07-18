@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: ANSITerm Wiki (user guide)
+    url: https://github.com/NicholasTracy/ANSITerm/wiki
+    about: Installation, terminals, examples, and troubleshooting — start here before filing an issue.

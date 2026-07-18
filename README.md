@@ -7,6 +7,8 @@ ANSITerm is an Arduino library that sends ANSI/VT-style escape sequences to a te
 
 > Note: This library is under active development. Please report issues with a minimal sketch and your terminal + board details.
 
+**User guide (non-technical):** [ANSITerm Wiki](https://github.com/NicholasTracy/ANSITerm/wiki) — installation, choosing a terminal, example walkthroughs, and troubleshooting.
+
 ---
 
 ## Features (high level)
@@ -18,7 +20,7 @@ ANSITerm is an Arduino library that sends ANSI/VT-style escape sequences to a te
 - Input: `pollInput()` for Enter, arrows, and SGR mouse press/release
 - Mouse: enable/disable reporting, parse terminal mouse packets
 
-See the `examples/` folder for usage patterns.
+See the `examples/` folder for usage patterns, or the [Examples section of the Wiki](https://github.com/NicholasTracy/ANSITerm/wiki/Using-the-Examples).
 
 ---
 
@@ -70,7 +72,8 @@ void loop() {}
 
 ## Contributing
 
-- File bugs and feature requests in [Issues](https://github.com/NicholasTracy/ANSITerm/issues).
+- Prefer the [Wiki](https://github.com/NicholasTracy/ANSITerm/wiki) for how-to questions.
+- File bugs, features, docs gaps, or questions via [Issues](https://github.com/NicholasTracy/ANSITerm/issues/new/choose) (templates provided).
 - Pull requests welcome. Please keep patches focused and ensure CI is green.
 
 ---

@@ -1,0 +1,93 @@
+name: Bug report
+description: Something does not work as expected with ANSITerm or an example.
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for helping improve ANSITerm. Please check the [Wiki](https://github.com/NicholasTracy/ANSITerm/wiki) and existing issues first.
+        Put the library version in the title when you can (for example: `[Bug]: 0.1.0 click ignored in PuTTY`).
+  - type: input
+    id: library-version
+    attributes:
+      label: Library version
+      description: Version from Library Manager, or the git tag / commit if you installed from GitHub.
+      placeholder: "0.1.0"
+    validations:
+      required: true
+  - type: input
+    id: ide-version
+    attributes:
+      label: Arduino IDE or Arduino CLI version
+      placeholder: "Arduino IDE 2.3.x"
+    validations:
+      required: true
+  - type: input
+    id: board
+    attributes:
+      label: Board
+      description: Board selected in the IDE (Tools → Board).
+      placeholder: "Arduino Mega 2560 / ESP32 Dev Module / …"
+    validations:
+      required: true
+  - type: input
+    id: terminal
+    attributes:
+      label: Terminal program
+      description: App you used to view the ANSI UI (and baud rate if known).
+      placeholder: "PuTTY 9600 / VS Code Serial Monitor / telnet / …"
+    validations:
+      required: true
+  - type: dropdown
+    id: example
+    attributes:
+      label: Which example or sketch?
+      options:
+        - BasicExample
+        - AdvancedExample
+        - ButtonsExample
+        - GraphicExample
+        - ANSFileExample
+        - NetworkTerminalExample
+        - ESPWiFiControlExample
+        - My own sketch
+        - Not sure / library only
+    validations:
+      required: true
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: Describe what you saw. Include error text if the IDE showed any.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What did you expect?
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: Numbered list helps a lot.
+      placeholder: |
+        1. Install ANSITerm …
+        2. Open Examples → ANSITerm → …
+        3. Upload and open terminal at …
+        4. …
+    validations:
+      required: true
+  - type: textarea
+    id: sketch
+    attributes:
+      label: Minimal sketch (if not a stock example)
+      description: Paste a short sketch that shows the problem, or write “stock example only”.
+      render: cpp
+  - type: textarea
+    id: extras
+    attributes:
+      label: Extra details
+      description: Screenshots, OS, shields (SD, Ethernet), wiring notes, etc.

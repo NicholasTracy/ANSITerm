@@ -1,0 +1,48 @@
+name: Feature request
+description: Suggest a new capability or improvement for ANSITerm.
+title: "[Feature]: "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Ideas are welcome. Please check the [Wiki](https://github.com/NicholasTracy/ANSITerm/wiki) and open issues first so we can avoid duplicates.
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem or goal
+      description: What are you trying to do that is hard or impossible today?
+      placeholder: I want to …
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+      description: How should ANSITerm behave if this existed?
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives you considered
+      description: Other libraries, workarounds, or API shapes you thought about.
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Drawing / layout
+        - Colors
+        - Keyboard / mouse input
+        - Examples / documentation
+        - Network / ESP
+        - Performance / memory
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: extras
+    attributes:
+      label: Extra context
+      description: Boards, terminals, or sketches this would help.

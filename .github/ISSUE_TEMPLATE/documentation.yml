@@ -1,0 +1,36 @@
+name: Documentation
+description: Report unclear, missing, or incorrect docs (README, Wiki, or example comments).
+title: "[Docs]: "
+labels: ["documentation"]
+body:
+  - type: markdown
+    attributes:
+      value: Help us keep the Wiki and examples clear for newcomers.
+  - type: dropdown
+    id: where
+    attributes:
+      label: Where is the problem?
+      options:
+        - Wiki
+        - README
+        - Example sketch comments
+        - Issue / PR templates
+        - Other
+    validations:
+      required: true
+  - type: input
+    id: link
+    attributes:
+      label: Page or file link
+      placeholder: "https://github.com/NicholasTracy/ANSITerm/wiki/Getting-Started"
+  - type: textarea
+    id: issue
+    attributes:
+      label: What is wrong or missing?
+    validations:
+      required: true
+  - type: textarea
+    id: suggestion
+    attributes:
+      label: Suggested improvement
+      description: Optional wording or structure you would prefer.
