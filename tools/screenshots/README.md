@@ -11,9 +11,11 @@ GitHub Actions cannot drive a physical board + terminal. Scenarios in `scenarios
 ```bash
 pip install -r tools/screenshots/requirements.txt
 python tools/screenshots/generate.py          # write docs/screenshots/*
-python tools/screenshots/generate.py --check  # fail on drift vs committed files
+python tools/screenshots/generate.py --check  # local byte compare (may differ from Linux)
 python tools/screenshots/sync_wiki.py --tag v0.2.1 --raw-ref master
 ```
+
+Committed PNG/GIF bytes are produced on **ubuntu-latest** (FreeType differs across OS). Prefer CI goldens over Windows/macOS output when updating docs.
 
 ## Roster
 
@@ -23,5 +25,6 @@ python tools/screenshots/sync_wiki.py --tag v0.2.1 --raw-ref master
 
 [`.github/workflows/example-screenshots.yml`](../../.github/workflows/example-screenshots.yml):
 
-- **PR / push:** `--check` drift gate
+- **PR:** regenerate on Linux; fail if `docs/screenshots` drifts
+- **Push / dispatch:** on drift, open a squash-merged PR with Linux goldens
 - **Tag `v*`:** regenerate → PR → auto-merge → Wiki sync

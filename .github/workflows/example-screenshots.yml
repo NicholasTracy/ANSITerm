@@ -38,17 +38,55 @@ jobs:
           sudo apt-get install -y fonts-dejavu-core
           python -m pip install --upgrade pip
           pip install -r tools/screenshots/requirements.txt
-      - name: Check drift against committed docs
-        run: python tools/screenshots/generate.py --check
-      - name: Generate (workflow_dispatch preview)
-        if: github.event_name == 'workflow_dispatch'
-        run: python tools/screenshots/generate.py
-      - name: Upload artifacts
-        if: github.event_name == 'workflow_dispatch'
+      - name: Regenerate screenshots
+        id: regen
+        run: |
+          set -euo pipefail
+          # Linux runners are the source of truth for PNG/GIF bytes (FreeType
+          # rasterization differs across OS even with the same TTF).
+          python tools/screenshots/generate.py
+          if git diff --quiet -- docs/screenshots; then
+            echo "drift=false" >> "$GITHUB_OUTPUT"
+            echo "Screenshots OK (no drift)."
+          else
+            echo "drift=true" >> "$GITHUB_OUTPUT"
+            echo "Screenshot drift detected:"
+            git --no-pager diff --stat -- docs/screenshots
+          fi
+      - name: Upload regenerated screenshots
+        if: steps.regen.outputs.drift == 'true' || github.event_name == 'workflow_dispatch'
         uses: actions/upload-artifact@v4
         with:
-          name: example-screenshots
+          name: regenerated-screenshots
           path: docs/screenshots/*
+      - name: Open auto-merge PR with Linux goldens
+        if: steps.regen.outputs.drift == 'true' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          BRANCH="chore/screenshots-linux-$(echo '${{ github.sha }}' | cut -c1-7)"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -B "$BRANCH"
+          git add docs/screenshots
+          git commit -m "Sync example screenshots to Linux CI renderer."
+          git push -u origin "$BRANCH" --force
+          PR_URL=$(gh pr list --head "$BRANCH" --json url --jq '.[0].url // empty')
+          if [[ -z "${PR_URL}" ]]; then
+            PR_URL=$(gh pr create \
+              --title "Sync example screenshots (Linux CI)" \
+              --body "Regenerated on ubuntu-latest so PNG/GIF bytes match the drift gate." \
+              --base master \
+              --head "$BRANCH")
+          fi
+          gh pr merge --auto --squash "$PR_URL" || true
+          gh pr merge --squash --delete-branch "$PR_URL" || true
+      - name: Fail when drift remains on pull_request
+        if: steps.regen.outputs.drift == 'true' && github.event_name == 'pull_request'
+        run: |
+          echo "Screenshot drift on PR. Re-run generate on ubuntu (or merge the sync PR) and commit docs/screenshots." >&2
+          exit 1
 
   release-pr:
     name: Release screenshot PR (auto-merge)

@@ -76,12 +76,17 @@ def _parse_color(value, default: tuple[int, int, int]) -> tuple[int, int, int]:
     return default
 
 
+_BUNDLED_FONT = Path(__file__).resolve().parent / "fonts" / "DejaVuSansMono.ttf"
+
+
 def _font(size: int) -> ImageFont.ImageFont:
+    # Prefer the vendored TTF so PNG/GIF bytes match across Windows/macOS/Linux CI.
     candidates = [
-        "C:/Windows/Fonts/consola.ttf",
-        "C:/Windows/Fonts/cascadiamono.ttf",
+        str(_BUNDLED_FONT),
         "/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf",
         "/usr/share/fonts/truetype/liberation/LiberationMono-Regular.ttf",
+        "C:/Windows/Fonts/consola.ttf",
+        "C:/Windows/Fonts/cascadiamono.ttf",
         "/System/Library/Fonts/Menlo.ttc",
     ]
     for path in candidates:
