@@ -4,6 +4,7 @@
  *
  * What you learn: Timed game ticks independent of input, incremental terminal updates
  * (erase old cell / restore walls / draw sprites only where needed), and non-blocking Serial keys.
+ * Logical playfield coords are 0-based; termRow/termCol map them to 1-based ANSI positions.
  *
  * Hardware: USB serial at 9600 baud; UTF-8 terminal. Mouse reporting stays off (see ButtonsExample).
  *
@@ -20,6 +21,7 @@ const char* WALL_CHAR = ANSI_BLOCK_MEDIUM;
 const char* ENEMY_CHAR = "&";
 const char* PROJECTILE_CHAR = "*";
 
+// Logical playfield is 0-based; ANSI cursor positions are 1-based (see termRow/termCol).
 const int SCREEN_WIDTH = 40;
 const int SCREEN_HEIGHT = 20;
 const unsigned long TICK_MS = 65;
@@ -75,6 +77,8 @@ int prevEPy = -1;
 unsigned long lastSimMs = 0;
 bool keyHandledThisLoop = false;
 
+uint8_t termRow(int y);
+uint8_t termCol(int x);
 void flushSerialInput();
 void resetGameState();
 void fullRedraw();
@@ -133,6 +137,14 @@ void loop() {
     }
 }
 
+uint8_t termRow(int y) {
+    return static_cast<uint8_t>(y + 1);
+}
+
+uint8_t termCol(int x) {
+    return static_cast<uint8_t>(x + 1);
+}
+
 void flushSerialInput() {
     while (Serial.available() > 0) {
         Serial.read();
@@ -174,13 +186,11 @@ bool isWallCell(int x, int y) {
 }
 
 void restoreCell(int x, int y) {
-    const uint8_t row = static_cast<uint8_t>(y);
-    const uint8_t col = static_cast<uint8_t>(x);
     if (isWallCell(x, y)) {
         terminal.setTextColor("blue");
-        terminal.writeTextAt(row, col, WALL_CHAR);
+        terminal.writeTextAt(termRow(y), termCol(x), WALL_CHAR);
     } else {
-        terminal.deleteAtPosition(row, col);
+        terminal.deleteAtPosition(termRow(y), termCol(x));
     }
 }
 
@@ -189,32 +199,32 @@ void fullRedraw() {
 
     terminal.setTextColor("blue");
     for (int i = 0; i < SCREEN_WIDTH; i++) {
-        terminal.writeTextAt(0, i, WALL_CHAR);
-        terminal.writeTextAt(SCREEN_HEIGHT - 1, i, WALL_CHAR);
+        terminal.writeTextAt(termRow(0), termCol(i), WALL_CHAR);
+        terminal.writeTextAt(termRow(SCREEN_HEIGHT - 1), termCol(i), WALL_CHAR);
     }
     for (int i = 0; i < SCREEN_HEIGHT; i++) {
-        terminal.writeTextAt(i, 0, WALL_CHAR);
-        terminal.writeTextAt(i, SCREEN_WIDTH - 1, WALL_CHAR);
+        terminal.writeTextAt(termRow(i), termCol(0), WALL_CHAR);
+        terminal.writeTextAt(termRow(i), termCol(SCREEN_WIDTH - 1), WALL_CHAR);
     }
     for (int i = 5; i < SCREEN_HEIGHT - 5; i++) {
-        terminal.writeTextAt(i, 20, WALL_CHAR);
+        terminal.writeTextAt(termRow(i), termCol(20), WALL_CHAR);
     }
 
     if (isAlive) {
         terminal.setTextColor("green");
-        terminal.writeTextAt(playerY, playerX, PLAYER_CHAR);
+        terminal.writeTextAt(termRow(playerY), termCol(playerX), PLAYER_CHAR);
     }
 
     terminal.setTextColor("red");
-    terminal.writeTextAt(enemyY, enemyX, ENEMY_CHAR);
+    terminal.writeTextAt(termRow(enemyY), termCol(enemyX), ENEMY_CHAR);
 
     if (playerProjectileX >= 0) {
         terminal.setTextColor("yellow");
-        terminal.writeTextAt(playerProjectileY, playerProjectileX, PROJECTILE_CHAR);
+        terminal.writeTextAt(termRow(playerProjectileY), termCol(playerProjectileX), PROJECTILE_CHAR);
     }
     if (enemyProjectileX >= 0) {
         terminal.setTextColor("magenta");
-        terminal.writeTextAt(enemyProjectileY, enemyProjectileX, PROJECTILE_CHAR);
+        terminal.writeTextAt(termRow(enemyProjectileY), termCol(enemyProjectileX), PROJECTILE_CHAR);
     }
 
     syncSnapshot();
@@ -242,14 +252,15 @@ void renderIncremental() {
 
         terminal.setTextColor("red");
         if (endState == EndState::Won) {
-            terminal.writeTextAt(enemyY, enemyX, "X");
-            terminal.writeTextAt(SCREEN_HEIGHT / 2, SCREEN_WIDTH / 2 - 5, "YOU WIN!");
+            terminal.writeTextAt(termRow(enemyY), termCol(enemyX), "X");
+            terminal.writeTextAt(termRow(SCREEN_HEIGHT / 2), termCol(SCREEN_WIDTH / 2 - 5), "YOU WIN!");
         } else {
-            terminal.writeTextAt(playerY, playerX, "X");
-            terminal.writeTextAt(SCREEN_HEIGHT / 2, SCREEN_WIDTH / 2 - 5, "GAME OVER");
+            terminal.writeTextAt(termRow(playerY), termCol(playerX), "X");
+            terminal.writeTextAt(termRow(SCREEN_HEIGHT / 2), termCol(SCREEN_WIDTH / 2 - 5), "GAME OVER");
         }
         terminal.setTextColor("white");
-        terminal.writeTextAt(SCREEN_HEIGHT / 2 + 1, SCREEN_WIDTH / 2 - 10, "Press R to restart");
+        terminal.writeTextAt(termRow(SCREEN_HEIGHT / 2 + 1), termCol(SCREEN_WIDTH / 2 - 10),
+                             "Press R to restart");
 
         endBannerDrawn = true;
         syncSnapshot();
@@ -263,13 +274,13 @@ void renderIncremental() {
     if (isAlive && (prevPX != playerX || prevPY != playerY)) {
         restoreCell(prevPX, prevPY);
         terminal.setTextColor("green");
-        terminal.writeTextAt(playerY, playerX, PLAYER_CHAR);
+        terminal.writeTextAt(termRow(playerY), termCol(playerX), PLAYER_CHAR);
     }
 
     if (prevEX != enemyX || prevEY != enemyY) {
         restoreCell(prevEX, prevEY);
         terminal.setTextColor("red");
-        terminal.writeTextAt(enemyY, enemyX, ENEMY_CHAR);
+        terminal.writeTextAt(termRow(enemyY), termCol(enemyX), ENEMY_CHAR);
     }
 
     if (prevPPx >= 0
@@ -278,7 +289,7 @@ void renderIncremental() {
     }
     if (playerProjectileX >= 0) {
         terminal.setTextColor("yellow");
-        terminal.writeTextAt(playerProjectileY, playerProjectileX, PROJECTILE_CHAR);
+        terminal.writeTextAt(termRow(playerProjectileY), termCol(playerProjectileX), PROJECTILE_CHAR);
     }
 
     if (prevEPx >= 0
@@ -287,7 +298,7 @@ void renderIncremental() {
     }
     if (enemyProjectileX >= 0) {
         terminal.setTextColor("magenta");
-        terminal.writeTextAt(enemyProjectileY, enemyProjectileX, PROJECTILE_CHAR);
+        terminal.writeTextAt(termRow(enemyProjectileY), termCol(enemyProjectileX), PROJECTILE_CHAR);
     }
 
     syncSnapshot();

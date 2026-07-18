@@ -13,7 +13,7 @@ import time
 
 EXPECTED_SNIPPETS = [
     "Welcome to ANSITerm!",
-    "This is a box drawn with ANSI characters.",
+    "Box drawing with ANSI characters.",
 ]
 
 OPTIONAL_CLICK = "Button clicked!"

@@ -53,7 +53,7 @@ jobs:
             echo "==> Building $SKETCH"
             arduino-cli compile --fqbn arduino:avr:mega --library . "$SKETCH"
           done < <(find examples -type f -name '*.ino' \
-            ! -path '*/SSHExample/*' \
+            ! -path '*/NetworkTerminalExample/*' \
             ! -path '*/ESPWiFiControlExample/*' \
             | sort)
 
@@ -63,7 +63,7 @@ jobs:
           set -euo pipefail
           for SKETCH in \
             examples/ESPWiFiControlExample/ESPWiFiControlExample.ino \
-            examples/SSHExample/SSHExample.ino
+            examples/NetworkTerminalExample/NetworkTerminalExample.ino
           do
             echo "==> Building $SKETCH for esp32:esp32:esp32"
             arduino-cli compile --fqbn esp32:esp32:esp32 --library . "$SKETCH"
@@ -76,21 +76,21 @@ jobs:
             --library . \
             examples/ESPWiFiControlExample/ESPWiFiControlExample.ino
 
-      - name: Compile SSH example (UNO WiFi Rev2 + WiFiNINA)
+      - name: Compile network example (UNO WiFi Rev2 + WiFiNINA)
         run: |
           arduino-cli compile \
             --fqbn arduino:megaavr:uno2018 \
-            --build-property compiler.cpp.extra_flags="-DANSITERM_SSH_USE_WIFI_NINA" \
+            --build-property compiler.cpp.extra_flags="-DANSITERM_NET_USE_WIFI_NINA" \
             --library . \
-            examples/SSHExample/SSHExample.ino
+            examples/NetworkTerminalExample/NetworkTerminalExample.ino
 
-      - name: Compile SSH example (Mega + Ethernet)
+      - name: Compile network example (Mega + Ethernet)
         run: |
           arduino-cli compile \
             --fqbn arduino:avr:mega \
-            --build-property compiler.cpp.extra_flags="-DANSITERM_SSH_USE_ETHERNET" \
+            --build-property compiler.cpp.extra_flags="-DANSITERM_NET_USE_ETHERNET" \
             --library . \
-            examples/SSHExample/SSHExample.ino
+            examples/NetworkTerminalExample/NetworkTerminalExample.ino
 
       - name: Analyze with CodeQL
         uses: github/codeql-action/analyze@v3

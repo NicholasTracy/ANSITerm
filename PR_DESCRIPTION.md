@@ -33,7 +33,7 @@ This document matches the workflows under `.github/workflows/` as of the current
 - Boards: `arduino:avr:uno`, `arduino:avr:leonardo`, `arduino:avr:mega`.
 - Installs core `arduino:avr` and library **SD** (for `ANSFileExample`).
 - Compiles every sketch under `examples/**/*.ino` **except**:
-  - `examples/SSHExample/`
+  - `examples/NetworkTerminalExample/`
   - `examples/ESPWiFiControlExample/`
 - Uses `arduino-cli compile --fqbn … --library . <sketch.ino>` so the checkout root is treated as the library under test.
 - **UNO/Leonardo exception:** `examples/ANSFileExample/ANSFileExample.ino` is **skipped** on UNO and Leonardo because SD + file-list buffers exceed their SRAM; it still builds on Mega.
@@ -41,18 +41,18 @@ This document matches the workflows under `.github/workflows/` as of the current
 ### Compile ESP examples
 
 - Boards: `esp32:esp32:esp32`, `esp8266:esp8266:generic`.
-- Compiles `ESPWiFiControlExample` and `SSHExample` for each.
+- Compiles `ESPWiFiControlExample` and `NetworkTerminalExample` for each.
 
-### Compile `SSHExample` (additional stacks)
+### Compile `NetworkTerminalExample` (additional stacks)
 
-1. **UNO WiFi Rev2 + WiFiNINA** — `arduino:megaavr:uno2018`, `-DANSITERM_SSH_USE_WIFI_NINA`, `WiFiNINA` library.
-2. **Mega + Ethernet** — `arduino:avr:mega`, `-DANSITERM_SSH_USE_ETHERNET`, `Ethernet` library.
+1. **UNO WiFi Rev2 + WiFiNINA** — `arduino:megaavr:uno2018`, `-DANSITERM_NET_USE_WIFI_NINA`, `WiFiNINA` library.
+2. **Mega + Ethernet** — `arduino:avr:mega`, `-DANSITERM_NET_USE_ETHERNET`, `Ethernet` library.
 
 ## CodeQL job
 
 - Initializes CodeQL for `cpp` with `build-mode: manual` ([github/codeql-action](https://github.com/github/codeql-action)).
 - Installs **arduino:avr**, **arduino:megaavr**, **esp32:esp32**, **esp8266:esp8266**, and libraries **SD**, **Ethernet**, **WiFiNINA**.
-- Compiles AVR examples (excluding SSH + ESP Wi-Fi control) on Mega, ESP sketches on ESP32/ESP8266, plus the WiFiNINA/Ethernet SSH variants.
+- Compiles AVR examples (excluding network + ESP Wi-Fi control) on Mega, ESP sketches on ESP32/ESP8266, plus the WiFiNINA/Ethernet network variants.
 - Runs `github/codeql-action/analyze@v3` after builds.
 
 ## Maintainer checklist

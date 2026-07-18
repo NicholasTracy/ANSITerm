@@ -6,8 +6,14 @@
  * The same ANSI UI is rendered on USB Serial and on a network terminal client.
  *
  * Network terminal: raw TCP on port 23 (telnet-style). This is not encrypted SSH.
- * Mouse clicks are supported when the client sends SGR mouse reports; arrow keys +
- * Enter always work as a fallback.
+ * Mouse clicks are supported when the client sends SGR mouse reports; arrow keys /
+ * W-S / J-K + Enter always work as a fallback.
+ *
+ * Security notes (lab / demo defaults):
+ * - Soft-AP password defaults to AP_PASS below (change before field use).
+ * - STA SSID/password chosen in the UI are stored in EEPROM in plaintext.
+ *
+ * Serial: 115200 baud. setup() waits briefly for USB CDC, then continues headless.
  *
  * License: LGPL-3.0 — see LICENSE.txt in the library root.
  */
@@ -129,8 +135,10 @@ uint8_t buttonAt(uint8_t row, uint8_t col);
 
 void setup() {
     Serial.begin(115200);
-    while (!Serial) {
-        ;
+    // Native-USB boards benefit from a short wait; do not block forever (headless ESP).
+    const unsigned long serialWaitStarted = millis();
+    while (!Serial && (millis() - serialWaitStarted) < 2000) {
+        delay(10);
     }
 
     beginTerminal(serialTerm, true);
@@ -556,7 +564,7 @@ void renderDashboardStatic(ANSITerm& term, bool networkView) {
                                        : "View: USB serial terminal");
 
     term.setTextColor("white");
-    term.drawBox(6, 2, 18, 48);
+    term.drawBox(6, 2, 19, 48);
     term.setTextColor("green");
     term.writeTextAt(7, 4, "Connection Status");
     term.setTextColor("white");
@@ -572,14 +580,14 @@ void renderDashboardStatic(ANSITerm& term, bool networkView) {
     term.writeTextAt(18, 4, "Pass:");
 
     term.setTextColor("magenta");
-    term.drawBox(6, 50, 23, 78);
+    term.drawBox(6, 50, 24, 78);
     term.writeTextAt(7, 53, "Actions");
 
     term.setTextColor("cyan");
-    term.drawBox(19, 2, 23, 48);
-    term.writeTextAt(20, 4, "Controls:");
-    term.writeTextAt(21, 4, "Arrows or W/S or J/K + Enter");
-    term.writeTextAt(22, 4, "Mouse click when supported by terminal");
+    term.drawBox(20, 2, 24, 48);
+    term.writeTextAt(21, 4, "Controls:");
+    term.writeTextAt(22, 4, "Arrows or W/S or J/K + Enter");
+    term.writeTextAt(23, 4, "Mouse click when supported by terminal");
 }
 
 void renderDashboardDynamic(ANSITerm& term, UiSession& ui) {
@@ -632,11 +640,11 @@ void renderDashboardDynamic(ANSITerm& term, UiSession& ui) {
     if (selectedScanIndex >= 0 && selectedScanIndex < static_cast<int8_t>(scanCount)) {
         snprintf(line, sizeof(line), "Net %d/%d %lddBm", selectedScanIndex + 1, scanCount,
                  static_cast<long>(scanRssi[selectedScanIndex]));
-        writeField(term, 19, 52, 25, line);
+        writeField(term, 20, 52, 25, line);
     } else {
-        writeField(term, 19, 52, 25, "Net: (none)");
+        writeField(term, 20, 52, 25, "Net: (none)");
     }
-    writeField(term, 20, 52, 25, selectedSsid[0] ? selectedSsid : "(scan/select)");
+    writeField(term, 21, 52, 25, selectedSsid[0] ? selectedSsid : "(scan/select)");
 }
 
 void drawButton(ANSITerm& term, uint8_t row1, uint8_t col1, uint8_t row2, uint8_t col2,

@@ -39,10 +39,10 @@ Search **ANSITerm** in *Arduino IDE → Tools → Manage Libraries…* and click
 | Target | Examples compiled in CI |
 |--------|-------------------------|
 | `arduino:avr:uno` / `leonardo` / `mega` | Basic, Advanced, Buttons, Graphic; ANSFile on Mega only (skipped on Uno/Leonardo for SRAM) |
-| `esp32:esp32:esp32` | `ESPWiFiControlExample`, `SSHExample` |
-| `esp8266:esp8266:generic` | `ESPWiFiControlExample`, `SSHExample` |
-| `arduino:megaavr:uno2018` + WiFiNINA | `SSHExample` |
-| `arduino:avr:mega` + Ethernet | `SSHExample` |
+| `esp32:esp32:esp32` | `ESPWiFiControlExample`, `NetworkTerminalExample` |
+| `esp8266:esp8266:generic` | `ESPWiFiControlExample`, `NetworkTerminalExample` |
+| `arduino:megaavr:uno2018` + WiFiNINA | `NetworkTerminalExample` |
+| `arduino:avr:mega` + Ethernet | `NetworkTerminalExample` |
 
 `architectures=*` — the library itself builds anywhere a `Stream` is available. Network examples need the matching Wi‑Fi/Ethernet stack for your board.
 

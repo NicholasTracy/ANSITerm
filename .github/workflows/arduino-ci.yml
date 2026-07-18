@@ -52,7 +52,7 @@ jobs:
             echo "==> Building ${SKETCH} for ${{ matrix.fqbn }}"
             arduino-cli compile --fqbn "${{ matrix.fqbn }}" --library . "${SKETCH}"
           done < <(find examples -type f -name '*.ino' \
-            ! -path '*/SSHExample/*' \
+            ! -path '*/NetworkTerminalExample/*' \
             ! -path '*/ESPWiFiControlExample/*' \
             | sort)
 
@@ -86,14 +86,14 @@ jobs:
           set -euo pipefail
           for SKETCH in \
             examples/ESPWiFiControlExample/ESPWiFiControlExample.ino \
-            examples/SSHExample/SSHExample.ino
+            examples/NetworkTerminalExample/NetworkTerminalExample.ino
           do
             echo "==> Building ${SKETCH} for ${{ matrix.fqbn }}"
             arduino-cli compile --fqbn "${{ matrix.fqbn }}" --library . "${SKETCH}"
           done
 
-  build_ssh_megaavr_wifi:
-    name: Compile SSH example (UNO WiFi Rev2 + WiFiNINA)
+  build_net_megaavr_wifi:
+    name: Compile network example (UNO WiFi Rev2 + WiFiNINA)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -106,16 +106,16 @@ jobs:
           arduino-cli core update-index
           arduino-cli core install arduino:megaavr
           arduino-cli lib install WiFiNINA
-      - name: Compile SSH example for UNO WiFi Rev2
+      - name: Compile network example for UNO WiFi Rev2
         run: |
           arduino-cli compile \
             --fqbn arduino:megaavr:uno2018 \
-            --build-property compiler.cpp.extra_flags="-DANSITERM_SSH_USE_WIFI_NINA" \
+            --build-property compiler.cpp.extra_flags="-DANSITERM_NET_USE_WIFI_NINA" \
             --library . \
-            examples/SSHExample/SSHExample.ino
+            examples/NetworkTerminalExample/NetworkTerminalExample.ino
 
-  build_ssh_avr_ethernet:
-    name: Compile SSH example (Mega + Ethernet)
+  build_net_avr_ethernet:
+    name: Compile network example (Mega + Ethernet)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -128,10 +128,10 @@ jobs:
           arduino-cli core update-index
           arduino-cli core install arduino:avr
           arduino-cli lib install Ethernet
-      - name: Compile SSH example for Mega with Ethernet
+      - name: Compile network example for Mega with Ethernet
         run: |
           arduino-cli compile \
             --fqbn arduino:avr:mega \
-            --build-property compiler.cpp.extra_flags="-DANSITERM_SSH_USE_ETHERNET" \
+            --build-property compiler.cpp.extra_flags="-DANSITERM_NET_USE_ETHERNET" \
             --library . \
-            examples/SSHExample/SSHExample.ino
+            examples/NetworkTerminalExample/NetworkTerminalExample.ino
