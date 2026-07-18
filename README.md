@@ -2,7 +2,7 @@
 
 ANSITerm is an Arduino library that sends ANSI/VT-style escape sequences to a terminal via any `Stream` (e.g., `Serial`), letting you clear the screen, position the cursor, colorize text, draw boxes/tables, and (where supported) handle mouse clicks.
 
-[![Arduino CI](https://github.com/NicholasTracy/ANSITerm/actions/workflows/arduino-ci.yml/badge.svg)](https://github.com/NicholasTracy/ANSITerm/actions/workflows/arduino-ci.yml)
+[![Arduino CI](https://github.com/NicholasTracy/ANSITerm/actions/workflows/arduino-ci.yml/badge.svg?branch=master)](https://github.com/NicholasTracy/ANSITerm/actions/workflows/arduino-ci.yml?query=branch%3Amaster)
 [![License: LGPL v3](https://img.shields.io/badge/License-LGPL%20v3-blue.svg)](LICENSE.txt)
 
 > Note: This library is under active development. Please report issues with a minimal sketch and your terminal + board details.
