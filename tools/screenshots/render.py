@@ -150,21 +150,79 @@ def render_png(ansi: str, cols: int, rows: int, out: Path, **kwargs) -> None:
     img.save(out, format="PNG", optimize=True)
 
 
+TimedFrame = tuple[str, int]  # (ansi, duration_ms)
+
+
+def pace_frames(
+    frames_ansi: list[str] | list[TimedFrame],
+    *,
+    step_ms: int = 380,
+    action_ms: int = 900,
+    result_ms: int = 1300,
+    end_hold_ms: int = 3200,
+) -> list[TimedFrame]:
+    """Slow motion GIFs: linger on cues/results and pause before looping."""
+    if not frames_ansi:
+        return []
+    # Already timed
+    if isinstance(frames_ansi[0], tuple):
+        timed = [(a, int(d)) for a, d in frames_ansi]  # type: ignore[misc]
+        ansi_only = [a for a, _ in timed]
+    else:
+        ansi_only = list(frames_ansi)  # type: ignore[arg-type]
+        def _is_cue(text: str) -> bool:
+            lower = text.lower()
+            # Cue overlays from scenarios (avoid matching ordinary UI arrows).
+            return (
+                "key:" in lower
+                or "mouse →" in lower
+                or "mouse click" in lower
+                or "sgr mouse" in lower
+                or "space →" in lower
+            )
+
+        timed = []
+        for i, ansi in enumerate(ansi_only):
+            is_cue = _is_cue(ansi)
+            prev_cue = i > 0 and _is_cue(ansi_only[i - 1])
+            next_cue = i + 1 < len(ansi_only) and _is_cue(ansi_only[i + 1])
+            if is_cue:
+                timed.append((ansi, action_ms))
+            elif prev_cue or next_cue:
+                # Pause to read the screen before/after an emulated action.
+                timed.append((ansi, result_ms))
+            else:
+                timed.append((ansi, step_ms))
+
+    # Extra readable pause on the final frame before the loop restarts.
+    last_ansi, last_ms = timed[-1]
+    timed[-1] = (last_ansi, max(last_ms, end_hold_ms))
+    return timed
+
+
 def render_gif(
-    frames_ansi: list[str],
+    frames_ansi: list[str] | list[TimedFrame],
     cols: int,
     rows: int,
     out: Path,
     *,
-    duration_ms: int = 120,
+    duration_ms: int | None = None,
+    end_hold_ms: int = 3200,
     **kwargs,
 ) -> None:
     """Each entry is a *full screen redraw* ANSI string (clear + draw)."""
+    timed = pace_frames(frames_ansi, end_hold_ms=end_hold_ms)
+    if duration_ms is not None:
+        timed = [(ansi, duration_ms) for ansi, _ in timed]
+        timed[-1] = (timed[-1][0], max(duration_ms, end_hold_ms))
+
     images: list[Image.Image] = []
-    for ansi in frames_ansi:
+    durations: list[int] = []
+    for ansi, ms in timed:
         screen, stream = make_screen(cols, rows)
         apply_ansi(screen, stream, ansi)
         images.append(screen_to_image(screen, **kwargs))
+        durations.append(ms)
     out.parent.mkdir(parents=True, exist_ok=True)
     if not images:
         raise ValueError("no frames")
@@ -173,7 +231,7 @@ def render_gif(
         format="GIF",
         save_all=True,
         append_images=images[1:],
-        duration=duration_ms,
+        duration=durations,
         loop=0,
         optimize=True,
     )

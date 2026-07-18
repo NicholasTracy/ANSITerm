@@ -95,7 +95,7 @@ def generate_all(seed: int, out_dir: Path) -> list[Path]:
             rng_m = random.Random(seed ^ zlib_crc(eid + "-motion"))
             frames = sc["motion"](rng_m)
             motion_path = out_dir / entry["motion"]
-            render_gif(frames, cols, rows, motion_path, duration_ms=140)
+            render_gif(frames, cols, rows, motion_path)
             written.append(motion_path)
 
     for hero in roster.get("heroes", []):
