@@ -17,7 +17,7 @@ jobs:
         uses: arduino/arduino-lint-action@v2
         with:
           compliance: strict
-          library-manager: submit
+          library-manager: update
 
   build_avr:
     name: Compile AVR examples (${{ matrix.fqbn }})
